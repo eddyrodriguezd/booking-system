@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-./product-binary "com.test.booking.api.Handler::handleRequest"
+./binary $_HANDLER

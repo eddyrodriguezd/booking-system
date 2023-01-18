@@ -86,7 +86,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <imageName>product-binary</imageName>
+                            <imageName>binary</imageName>
                             <mainClass>com.amazonaws.services.lambda.runtime.api.client.AWSLambda</mainClass>
                             <buildArgs>
                                 <arg>--initialize-at-build-time=org.slf4j</arg>
