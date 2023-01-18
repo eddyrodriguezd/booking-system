@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "DB: Postgres Database"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  DBUsername:
+    Type: String
+  DBName:
+    Type: String
+  DBInstanceIdentifier:
+    Type: String
+
+  EngineVersion:
+    Description: "PostgreSQL version."
+    Type: String
+    AllowedValues: [
+        "13.3",
+        "13.4",
+        "13.5",
+        "13.6",
+        "13.7",
+        "14.1",
+        "14.2",
+        "14.3",
+      ] # aws rds describe-db-engine-versions --engine postgres --query "DBEngineVersions[].EngineVersion"
+
+  DBAllocatedStorage:
+    Description: "The allocated storage size, specified in GB"
+    Type: Number
+    Default: 5
+    MinValue: 5
+    MaxValue: 16384
+  DBMaxAllocatedStorage:
+    Type: Number
+  DBInstanceClass:
+    Description: "The instance type of database server."
+    Type: String
+    Default: "db.t3.micro"
+  DBBackupRetentionPeriod:
+    Description: "The number of days to keep snapshots of the cluster."
+    Type: Number
+    MinValue: 1
+    MaxValue: 30
+    Default: 7
+  DBMultiAZ:
+    Description: "Specifies if the database instance is deployed to multiple Availability Zones for HA."
+    Type: String
+    Default: false
+    AllowedValues: [true, false]
+  PreferredBackupWindow:
+    Description: "The daily time range in UTC during which you want to create automated backups."
+    Type: String
+    Default: "07:00-07:30"
+  PreferredMaintenanceWindow:
+    Description: The weekly time range (in UTC) during which system maintenance can occur.
+    Type: String
+    Default: "sun:00:00-sun:00:30"
+
+Resources:
+  #----------------------------------------------------------------
+  #---------------------- CREDENTIALS SECRET ----------------------
+  #----------------------------------------------------------------
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${Environment}-${Application}-${Module}-secret"
+      Description: "Database Credentials"
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBUsername}", "engine": "postgres", "host": "UPDATE VALUE AFTER DATABASE CREATION", "port": 5432, "dbname": "${DBName}", "dbInstanceIdentifier": "${DBInstanceIdentifier}"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: "'@/\"\\"
+
+  #---------------------------------------------------------
+  #------------------- DATABASE INSTANCE -------------------
+  #---------------------------------------------------------
+  DBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "DB Subnet Group"
+      SubnetIds:
+        - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/network/az/data/1}}" # Database Subnet A
+        - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/network/az/data/2}}" # Database Subnet B
+
+  DBInstance:
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref DBAllocatedStorage
+      AllowMajorVersionUpgrade: false
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: !Ref DBBackupRetentionPeriod
+      CopyTagsToSnapshot: true
+      #DeletionProtection: true
+      DBInstanceClass: !Ref DBInstanceClass
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      DBName: !Ref DBName
+      Engine: postgres
+      EngineVersion: !Ref EngineVersion
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword:
+        !Join [
+          "",
+          [
+            "{{resolve:secretsmanager:",
+            !Ref DatabaseSecret,
+            ":SecretString:password}}",
+          ],
+        ]
+      MaxAllocatedStorage: !Ref DBMaxAllocatedStorage
+      MultiAZ: !Ref DBMultiAZ
+      PreferredBackupWindow: !Ref PreferredBackupWindow
+      PreferredMaintenanceWindow: !Ref PreferredMaintenanceWindow
+      PubliclyAccessible: true
+      VPCSecurityGroups:
+        - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/network/sg/db/id}}"

@@ -1,0 +1,24 @@
+Version: 3
+
+APPLICATION_SETTINGS: &APPLICATION_SETTINGS
+  Application: booking
+  Module: network
+
+Blueprints:
+  vpc:
+    Order: 1
+    Region: us-east-1
+    Template: ./templates/vpc.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM]
+    Package: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+
+Stages:
+  test:
+    vpc:
+      Extends: vpc
+      StackName: network-vpc
+      Parameters:
+        Environment: test

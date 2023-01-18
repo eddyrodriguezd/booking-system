@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "NETWORK: VPC, Subnets, Route Tables, Security Groups and VPC Endpoints"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+Resources:
+  #--------------------------------------------------------
+  #------------------- VPC AND GATEWAYS -------------------
+  #--------------------------------------------------------
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MainVPC
+
+  VpcIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/vpc/id: Vpc Id"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/vpc/id"
+      Type: String
+      Value: !GetAtt Vpc.VpcId
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  #----------------------------------------------------------
+  #------------------- SUBNETS AND ROUTES -------------------
+  #----------------------------------------------------------
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.1.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet-A
+
+  PrivateSubnetAParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/az/app/1: Private Subnet Id AZ 1"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/az/app/1"
+      Type: String
+      Value: !GetAtt PrivateSubnetA.SubnetId
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet-B
+
+  PrivateSubnetBParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/az/app/2: Private Subnet Id AZ 2"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/az/app/2"
+      Type: String
+      Value: !GetAtt PrivateSubnetB.SubnetId
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.1.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: PublicSubnet-A
+
+  PublicSubnetAParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/az/data/1: Public Subnet Id AZ 1"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/az/data/1"
+      Type: String
+      Value: !GetAtt PublicSubnetA.SubnetId
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.1.3.0/24
+      AvailabilityZone: !Select [1, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: PublicSubnet-B
+
+  PublicSubnetBParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/az/data/2: Public Subnet Id AZ 2"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/az/data/2"
+      Type: String
+      Value: !GetAtt PublicSubnetB.SubnetId
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: Public RT
+  PublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: Private RT
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+
+  #-------------------------------------------------------
+  #------------------- SECURITY GROUPS -------------------
+  #-------------------------------------------------------
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Lambda functions
+      GroupName: lambda-security-group
+      Tags:
+        - Key: Name
+          Value: lambda-security-group
+      VpcId: !GetAtt Vpc.VpcId
+
+  LambdaToItselfHttpSGIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      Description: "Lambda to other Lambdas (HTTP)"
+      GroupId: !Ref LambdaSecurityGroup
+      SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+
+  LambdaToItselfHttpsSGIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      Description: "Lambda to other Lambdas (HTTPS)"
+      GroupId: !Ref LambdaSecurityGroup
+      SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  LambdaSGParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/sg/lambda/id: Lambda Security Group"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/sg/lambda/id"
+      Type: String
+      Value: !GetAtt LambdaSecurityGroup.GroupId
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for Database
+      GroupName: database-security-group
+      Tags:
+        - Key: Name
+          Value: database-security-group
+      VpcId: !GetAtt Vpc.VpcId
+
+  LambdaToDatabaseSGIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      Description: "Lambda to DB"
+      GroupId: !Ref DatabaseSecurityGroup
+      SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+
+  DatabaseSGParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/sg/db/id: Database Security Group"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/sg/db/id"
+      Type: String
+      Value: !GetAtt DatabaseSecurityGroup.GroupId
+
+  #-----------------------------------------------------
+  #------------------- VPC ENDPOINTS -------------------
+  #-----------------------------------------------------
+  EndpointSecretsManagerPrivateSubnetA:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
+      SubnetIds:
+        - !Ref PrivateSubnetA
+      VpcEndpointType: Interface
+      VpcId: !GetAtt Vpc.VpcId

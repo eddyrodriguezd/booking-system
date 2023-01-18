@@ -1,0 +1,36 @@
+Version: 3
+
+APPLICATION_SETTINGS: &APPLICATION_SETTINGS
+  Application: booking
+  Module: db
+
+DB_PARAMETERS: &DB_PARAMETERS
+  DBMultiAZ: false
+  EngineVersion: "13.6"
+  DBAllocatedStorage: 10
+  DBMaxAllocatedStorage: 50
+  DBInstanceClass: "db.t3.micro"
+  DBInstanceIdentifier: "booking-db-instance"
+  DBName: "booking"
+  DBUsername: "admin_account"
+
+Blueprints:
+  db-postgres:
+    Order: 2
+    Region: us-east-1
+    Template: ./templates/db-postgres.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: true
+    #EnableTerminationProtection: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+      <<: *DB_PARAMETERS
+
+Stages:
+  test:
+    db:
+      Extends: db-postgres
+      StackName: db-postgres
+      Parameters:
+        Environment: test
