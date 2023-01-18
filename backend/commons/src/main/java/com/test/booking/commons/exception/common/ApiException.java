@@ -1,6 +1,5 @@
-package com.test.booking.commons.exception;
+package com.test.booking.commons.exception.common;
 
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -10,7 +9,6 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@RegisterForReflection
 public class ApiException extends RuntimeException {
     private ResponseBody body;
     private int status;

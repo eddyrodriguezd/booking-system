@@ -8,79 +8,43 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <assembly-plugin.version>3.1.0</assembly-plugin.version>
-        <compiler-plugin.version>3.8.1</compiler-plugin.version>
-        <maven.compiler.parameters>true</maven.compiler.parameters>
-        <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus-plugin.version>2.10.2.Final</quarkus-plugin.version>
-        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-        <quarkus.platform.version>2.10.2.Final</quarkus.platform.version>
-        <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
 
-        <postgresql.version>42.3.6</postgresql.version>
+        <!-- AWS Core dependencies -->
         <awsjavasdk.version>2.19.13</awsjavasdk.version>
-        <lombok.version>1.18.24</lombok.version>
+        <aws-lambda-java-core.version>1.2.2</aws-lambda-java-core.version>
+
+        <!-- DB dependencies -->
+        <aws-secretsmanager-jdbc.version>1.0.8</aws-secretsmanager-jdbc.version>
+        <postgresql.version>42.5.1</postgresql.version>
+
+        <!-- Additional dependencies -->
+        <jackson.version>2.14.1</jackson.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
-        <joda-time.version>2.12.2</joda-time.version>
+        <lombok.version>1.18.24</lombok.version>
+        <slf4j-api.version>1.7.26</slf4j-api.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>${quarkus.platform.artifact-id}</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <!-- Quarkus dependencies -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-amazon-lambda-rest</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-orm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-orm-panache</artifactId>
-        </dependency>
-        <!-- Quarkus dependencies -->
-
-        <!--
+        <!-- AWS Core dependencies -->
         <dependency>
             <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.12.228</version>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>${aws-lambda-java-core.version}</version>
         </dependency>
-        -->
-
-        <!-- AWS dependencies -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>3.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-runtime-interface-client</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+        <!--
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>secretsmanager</artifactId>
@@ -101,10 +65,29 @@
             <artifactId>url-connection-client</artifactId>
             <version>${awsjavasdk.version}</version>
         </dependency>
-        <!-- AWS dependencies -->
+        -->
+        <!-- AWS Core dependencies -->
+
+        <!-- DB dependencies -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws.secretsmanager</groupId>
+            <artifactId>aws-secretsmanager-jdbc</artifactId>
+            <version>${aws-secretsmanager-jdbc.version}</version>
+        </dependency>
+        <!-- DB dependencies -->
 
 
         <!-- Additional dependencies -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -116,23 +99,11 @@
             <version>${lombok.version}</version>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>${joda-time.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
         </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Test dependencies -->
+        <!-- Additional dependencies -->
     </dependencies>
 
 </project>
