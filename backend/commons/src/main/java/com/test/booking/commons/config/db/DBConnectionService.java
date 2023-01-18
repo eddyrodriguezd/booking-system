@@ -12,8 +12,22 @@ import java.util.Properties;
 public class DBConnectionService {
     private static final String RDS_SECRET_ARN = System.getenv().get("RDS_SECRET_ARN");
 
+    public static Connection getDBConnectionV2(DBCredentials dbCredentials) {
+        String url = "jdbc:postgresql://" + dbCredentials.getHost() + ":" + dbCredentials.getPort() + "/" + dbCredentials.getDbname();
+        Properties props = new Properties();
+        props.setProperty("user", dbCredentials.getUsername());
+        props.setProperty("password", dbCredentials.getPassword());
+        try {
+            return DriverManager.getConnection(url, props);
+        } catch (SQLException e) {
+            log.error("Connection couldn't be established to database: <{}>. Error: <{}>. Stack Trace: <{}>.",  url, e.getMessage(), e.getStackTrace());
+            return null;
+        }
+    }
+
     public static Connection getDBConnection() {
         try {
+            log.info("Connecting to database...");
             Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver").getDeclaredConstructor().newInstance();
 
             Properties info = new Properties();
