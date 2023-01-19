@@ -7,7 +7,7 @@ import com.test.booking.api.dto.LocationDto;
 import com.test.booking.api.dto.PriceDto;
 import com.test.booking.api.dto.RoomDto;
 import com.test.booking.api.model.Room;
-import com.test.booking.api.repository.RepositoryFactory;
+import com.test.booking.api.repository.factory.RepositoryFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;

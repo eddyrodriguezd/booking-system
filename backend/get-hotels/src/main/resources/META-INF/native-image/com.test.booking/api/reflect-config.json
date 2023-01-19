@@ -27,6 +27,15 @@
     "allPublicClasses": true
   },
   {
+    "name": "com.test.booking.commons.model.Reservation",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
     "name": "com.test.booking.api.dto.CoordinatesDto",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

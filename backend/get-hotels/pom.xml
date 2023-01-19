@@ -4,10 +4,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.test.booking</groupId>
-    <artifactId>get-hotels</artifactId>
+    <artifactId>hotels</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Get Hotels</name>
+    <name>Hotels</name>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
