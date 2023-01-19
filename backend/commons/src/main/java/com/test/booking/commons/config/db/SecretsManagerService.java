@@ -2,6 +2,7 @@ package com.test.booking.commons.config.db;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.test.booking.commons.config.mapper.MapperConfig;
+import com.test.booking.commons.exception.JsonParsingException;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -20,10 +21,13 @@ public class SecretsManagerService {
             .httpClientBuilder(UrlConnectionHttpClient.builder())
             .build();
 
-    public static DBCredentials getDatabaseCredentials() throws JsonProcessingException {
+    public static DBCredentials getDatabaseCredentials() {
         String secret = getSecret();
-        log.info("Secret: " + secret);
-        return MapperConfig.getObjectMapper().readValue(secret, DBCredentials.class);
+        try {
+            return MapperConfig.getObjectMapper().readValue(secret, DBCredentials.class);
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(secret);
+        }
     }
 
     private static String getSecret() {

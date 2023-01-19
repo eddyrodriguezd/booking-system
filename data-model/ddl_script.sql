@@ -22,7 +22,7 @@ CREATE TABLE booking.rooms
   hotel_id uuid not NULL,
   type VARCHAR(50),
   number_of_guests smallint not null,
-  price int4 not null,
+  daily_rate int4 not null,
   currency_code VARCHAR(3) not null,
   constraint fk_hotel_id
      foreign key (hotel_id) 

@@ -1,0 +1,61 @@
+Version: 3
+
+## Application Settings
+APPLICATION_SETTINGS: &APPLICATION_SETTINGS
+  Application: booking
+  Module: api
+
+Blueprints:
+  api-account:
+    Region: us-east-1
+    Template: ./templates/api-account.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+
+  public-api:
+    Region: us-east-1
+    Template: ./templates/public-api.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+
+  apigw-resource:
+    Region: us-east-1
+    Template: ./templates/api-resource.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: false
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+
+Stages:
+  test:
+    api-account:
+      Extends: api-account
+      StackName: api-account
+      Parameters:
+        Environment: test
+
+    public-api:
+      Extends: public-api
+      StackName: public-api
+      Parameters:
+        Environment: test
+
+    #--------------------------------------------------------------
+    #---------------------- PUBLIC RESOURCES ----------------------
+    #--------------------------------------------------------------
+    api-resource-get-hotels:
+      Extends: apigw-resource
+      StackName: api-resource-get-hotels
+      Parameters:
+        Environment: test
+        APIAccess: "public"
+        MicroserviceParentPath: "/"
+        MicroserviceResourceName: "hotels"
+        IsResourcePathParameter: false

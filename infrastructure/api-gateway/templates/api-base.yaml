@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "API GW: API Base"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  RetentionInDays:
+    Description: Cloudwatch Logs retention in days
+    Type: String
+
+  APIAccess:
+    Type: String
+    AllowedValues: ["public", "private"]
+
+Conditions:
+  WillRetain: !Not [!Equals [!Ref RetentionInDays, ""]]
+
+Resources:
+  API:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${Environment}-${Application}-${Module}-${APIAccess}"
+      Description: !Sub "API GW (${APIAccess}) for ${Environment}/${Application}"
+      FailOnWarnings: true
+      BinaryMediaTypes:
+        - "multipart/form-data"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  #--------------------------------------------------------
+  #---------------------- DEPLOYMENT ----------------------
+  #--------------------------------------------------------
+
+  #
+  # Mock Method to allow API GW deployment to be created
+  #
+  MockMethod:
+    Type: "AWS::ApiGateway::Method"
+    Properties:
+      AuthorizationType: AWS_IAM
+      HttpMethod: GET
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: NEVER
+        RequestTemplates:
+          "application/json": '{"statusCode":200}'
+        IntegrationResponses:
+          - SelectionPattern: '2\d{2}'
+            StatusCode: "200"
+      MethodResponses:
+        - StatusCode: "200"
+      ResourceId: !GetAtt API.RootResourceId
+      RestApiId: !Ref API
+
+  APILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "API-Gateway-Execution-Logs_${Environment}-${Application}-${Module}-${APIAccess}-apigw-logs"
+      RetentionInDays:
+        !If [WillRetain, !Ref RetentionInDays, !Ref "AWS::NoValue"]
+
+  Deployment:
+    DependsOn: MockMethod
+    Type: "AWS::ApiGateway::Deployment"
+    Properties:
+      RestApiId: !Ref API
+
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      AccessLogSetting:
+        DestinationArn: !GetAtt APILogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","path":"$context.path","resourcePath":"$context.resourcePath","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength","responseLatency":"$context.responseLatency","integrationLatency":"$context.integrationLatency","caller":"$context.identity.caller","caller_account_id":"$context.identity.accountId","caller_arn":"$context.identity.userArn","errorMessage":"$context.error.message","cognito:username":"$context.authorizer.claims[''cognito:username'']"}'
+      Description: !Sub "${Environment} Stage"
+      RestApiId: !Ref API
+      StageName: !Ref Environment
+      DeploymentId: !Ref Deployment
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: /*
+          MetricsEnabled: true
+
+  #------------------------------------------------------------
+  #---------------------- SSM PARAMETERS ----------------------
+  #------------------------------------------------------------
+  APIIdParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/id"
+      Type: String
+      Value: !Ref API
+
+  APIRootResourceIdParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/root-resource/id"
+      Type: String
+      Value: !GetAtt API.RootResourceId

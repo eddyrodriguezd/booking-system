@@ -1,8 +1,6 @@
 package com.test.booking.commons.exception.common;
 
 import lombok.*;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
 @Getter
 @Setter
@@ -18,11 +16,6 @@ public class ApiException extends RuntimeException {
         this.body = ResponseBody.builder().code(code).message(message).build();
     }
 
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
-    }
-
     @Data
     public static class ResponseBody {
         private String code;
@@ -36,7 +29,7 @@ public class ApiException extends RuntimeException {
 
         @Override
         public String toString() {
-            return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+            return "ApiException.Body(code=" + code + ", message=" + message + ")";
         }
     }
 }

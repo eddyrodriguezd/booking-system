@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "API GW: Resource"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  MicroserviceParentPath:
+    Type: String
+  MicroserviceResourceName:
+    Type: String
+
+  IsResourcePathParameter:
+    Type: String
+    AllowedValues: ["true", "false"]
+  APIAccess:
+    Type: String
+    AllowedValues: ["public", "private"]
+
+Conditions:
+  IsPathRoot: !Equals [!Ref MicroserviceParentPath, "/"]
+  ProxyResource: !Equals [!Ref MicroserviceResourceName, "proxy"]
+  NonProxyResource: !Not [!Condition ProxyResource]
+  PathParameter: !Equals [!Ref IsResourcePathParameter, "true"]
+
+Resources:
+  APIGWResource:
+    Type: AWS::ApiGateway::Resource
+    Condition: NonProxyResource
+    Properties:
+      RestApiId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/id}}"
+      ParentId:
+        Fn::If:
+          - IsPathRoot
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/root-resource/id}}"
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}${MicroserviceParentPath}/parent-resource/id}}"
+      PathPart: !If
+        - PathParameter
+        - !Sub "{${MicroserviceResourceName}}"
+        - !Ref MicroserviceResourceName
+
+  APIGWProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Condition: ProxyResource
+    Properties:
+      RestApiId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/id}}"
+      ParentId:
+        Fn::If:
+          - IsPathRoot
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/root-resource/id}}"
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}${MicroserviceParentPath}/parent-resource/id}}"
+      PathPart: "{proxy+}"
+
+  APIResourceIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description:
+        Fn::If:
+          - IsPathRoot
+          - !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/${MicroserviceResourceName}/parent-resource/id: API Gateway Path Resource ID"
+          - !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}${MicroserviceParentPath}/${MicroserviceResourceName}/parent-resource/id: API Gateway Path Resource ID"
+      Name:
+        Fn::If:
+          - IsPathRoot
+          - !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/${MicroserviceResourceName}/parent-resource/id"
+          - !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}${MicroserviceParentPath}/${MicroserviceResourceName}/parent-resource/id"
+      Type: String
+      Value:
+        Fn::If:
+          - ProxyResource
+          - !Ref APIGWProxyResource
+          - !Ref APIGWResource
