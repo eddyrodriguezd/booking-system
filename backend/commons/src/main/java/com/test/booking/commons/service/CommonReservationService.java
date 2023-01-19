@@ -1,8 +1,8 @@
-package com.test.booking.api.service;
+package com.test.booking.commons.service;
 
-import com.test.booking.api.repository.factory.RepositoryFactory;
 import com.test.booking.commons.Constants;
 import com.test.booking.commons.model.Reservation;
+import com.test.booking.commons.repository.factory.CommonRepositoryFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -13,16 +13,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ReservationService {
+public class CommonReservationService {
 
     public static List<LocalDate> getAvailabilityByRoomId(Connection connection, UUID roomId) {
-        List<Reservation> reservations = RepositoryFactory.getReservationRepository().getReservationsByRoomId(connection, roomId);
+        List<Reservation> reservations = CommonRepositoryFactory.getReservationRepository().getReservationsByRoomId(connection, roomId);
 
         LocalDate firstAvailableDate = LocalDate.now().plus(Period.ofDays(1)); // The next day
-        LocalDate lastAvailableDate = firstAvailableDate.plus(Constants.RESERVATION_VALIDITY);
+        LocalDate lastAvailableDate = firstAvailableDate.plus(Constants.RESERVATION_AVAILABLE_PERIOD);
 
         List<LocalDate> availableDates = firstAvailableDate.datesUntil(lastAvailableDate).collect(Collectors.toList());
-        log.info("Available dates before filtering reservations: <{}>", availableDates);
 
         for(Reservation reservation : reservations) {
             availableDates.removeAll(reservation.getStay());

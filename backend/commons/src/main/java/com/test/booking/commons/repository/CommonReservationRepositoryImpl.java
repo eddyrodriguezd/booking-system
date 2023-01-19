@@ -1,4 +1,4 @@
-package com.test.booking.api.repository;
+package com.test.booking.commons.repository;
 
 import com.test.booking.commons.exception.DatabaseAccessException;
 import com.test.booking.commons.model.Reservation;
@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
@@ -19,7 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ReservationRepositoryImpl implements ReservationRepository {
+public class CommonReservationRepositoryImpl implements CommonReservationRepository {
 
     private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT checkin_date, checkout_date FROM booking.reservations WHERE room_id = ? ORDER BY checkin_date";
 
@@ -34,13 +33,13 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
             List<Reservation> reservations = new ArrayList<>();
             while (rs.next()) {
-                LocalDate checkinDate = LocalDate.parse(rs.getString("checkin_date"));
-                LocalDate checkoutDate = LocalDate.parse(rs.getString("checkout_date"));
                 reservations.add(
                         Reservation.builder()
-                                //.checkinDate(checkinDate)
-                                //.checkoutDate(checkoutDate)
-                                .stay(checkinDate.datesUntil(checkoutDate.plus(Period.ofDays(1))).collect(Collectors.toList()))
+                                .stay(
+                                        LocalDate.parse(rs.getString("checkin_date")).datesUntil(
+                                                LocalDate.parse(rs.getString("checkout_date")).plus(Period.ofDays(1))
+                                        ).collect(Collectors.toList())
+                                )
                                 .build()
                 );
             }

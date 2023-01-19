@@ -4,9 +4,8 @@ import java.time.Period;
 import java.time.temporal.TemporalAmount;
 
 public class Constants {
-    public static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    public static final String DATE_FORMAT = "yyyy-MM-dd";
-    public static final String TIME_FORMAT = "HH:mm:ss";
-
-    public static final TemporalAmount RESERVATION_VALIDITY = Period.ofMonths(3);
+    // Reservation maximum stay
+    public static final TemporalAmount RESERVATION_MAXIMUM_STAY = Period.ofDays(3);
+    // Reservations can't be done more than 30 days in advance
+    public static final TemporalAmount RESERVATION_AVAILABLE_PERIOD = Period.ofDays(30);
 }

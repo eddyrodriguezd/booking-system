@@ -18,8 +18,6 @@ public class Reservation implements Serializable {
 
     private UUID reservation_id;
     private UUID room_id;
-    //private LocalDate checkinDate;
-    //private LocalDate checkoutDate;
     private UUID guest_id;
     private List<LocalDate> stay;
 }

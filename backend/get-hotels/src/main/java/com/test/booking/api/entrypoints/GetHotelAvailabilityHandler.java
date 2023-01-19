@@ -4,10 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
-import com.test.booking.api.service.ReservationService;
 import com.test.booking.commons.config.db.DBConnectionService;
 import com.test.booking.commons.config.mapper.MapperConfig;
 import com.test.booking.commons.exception.common.ApiException;
+import com.test.booking.commons.service.CommonReservationService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -25,13 +25,10 @@ public class GetHotelAvailabilityHandler implements RequestHandler<APIGatewayV2H
         try {
             String roomId = event.getPathParameters().get("room_id");
             log.info("Getting availability for room <{}>", roomId);
-            List<LocalDate> availableDates = ReservationService.getAvailabilityByRoomId(connection, UUID.fromString(roomId));
-            String responseBody = MapperConfig.getObjectMapper().writeValueAsString(
-                    availableDates
-            );
+            List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(roomId));
             return APIGatewayV2HTTPResponse.builder()
                     .withStatusCode(200)
-                    .withBody(responseBody)
+                    .withBody(MapperConfig.getObjectMapper().writeValueAsString(availableDates))
                     .build();
         }
         catch (ApiException e) {
