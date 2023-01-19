@@ -3,10 +3,6 @@
     "name":"com.amazonaws.lambda.thirdparty.com.fasterxml.jackson.databind.deser.Deserializers[]"
   },
   {
-    "name":"com.amazonaws.lambda.thirdparty.com.fasterxml.jackson.databind.ext.Java7SupportImpl",
-    "methods":[{"name":"<init>","parameterTypes":[] }]
-  },
-  {
     "name":"com.amazonaws.services.lambda.runtime.LambdaRuntime",
     "fields":[{"name":"logger"}]
   },
@@ -17,10 +13,6 @@
   {
     "name":"java.util.Collections$UnmodifiableMap",
     "fields":[{"name":"m"}]
-  },
-  {
-    "name":"jdk.internal.module.IllegalAccessLogger",
-    "fields":[{"name":"logger"}]
   },
   {
     "name":"sun.misc.Unsafe",
