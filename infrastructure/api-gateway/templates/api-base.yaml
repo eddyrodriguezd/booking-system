@@ -35,6 +35,20 @@ Resources:
           - REGIONAL
 
   #--------------------------------------------------------
+  #---------------------- AUTHORIZER ----------------------
+  #--------------------------------------------------------
+  Authorizers:
+    DependsOn: API
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "./api-authorizer.yaml"
+      Parameters:
+        Application: !Ref Application
+        Module: !Ref Module
+        Environment: !Ref Environment
+        APIAccess: !Ref APIAccess
+
+  #--------------------------------------------------------
   #---------------------- DEPLOYMENT ----------------------
   #--------------------------------------------------------
 

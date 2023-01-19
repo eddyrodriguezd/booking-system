@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "LAMBDA: Function, Version and Alias"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  LambdaName:
+    Type: String
+    Description: "Unique identifier for the Lambda function"
+  LambdaHandler:
+    Type: String
+
+  LambdaFunctionMemorySize:
+    Description: "Lambda Function Memory"
+    Type: Number
+  LambdaFunctionTimeout:
+    Description: "Lambda Function Timeout"
+    Type: Number
+
+Resources:
+  LambdaMicroserviceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: !Sub "${Environment}-${Application}-${LambdaName}"
+      FunctionName: !Sub "${Environment}-${Application}-${LambdaName}"
+      Handler: !Sub "${LambdaHandler}"
+      Runtime: provided.al2
+      Code:
+        S3Bucket: booking-zip-files
+        S3Key: hotels.zip
+      MemorySize: !Ref LambdaFunctionMemorySize
+      Role: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/role/arn}}"
+      Timeout: !Ref LambdaFunctionTimeout
+      Environment:
+        Variables:
+          RDS_SECRET_ARN: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/db/secret/arn}}"
+          LOG_LEVEL: INFO
+      VpcConfig:
+        SecurityGroupIds:
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/network/sg/lambda/id}}" # Lambda Security Group
+        SubnetIds:
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/network/az/app/1}}" # Subnet A
+          #- !Sub '{{resolve:ssm:/cf/${Environment}/${Application}/network/az/app/2}}' # Subnet B
+
+  LambdaArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${LambdaName}: Lambda Microservice Arn."
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/arn"
+      Type: String
+      Value: !GetAtt LambdaMicroserviceFunction.Arn
+
+  #-------------------------------------------------------------
+  #---------------------- VERSION / ALIAS ----------------------
+  #-------------------------------------------------------------
+  FunctionVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      Description:
+        "Fn::Sub":
+          - "Initial version of function: ${FunctionName}-${LambdaName}"
+          - FunctionName: !Ref LambdaMicroserviceFunction
+      FunctionName: !Ref LambdaMicroserviceFunction
+
+  FunctionAliasLive:
+    Type: AWS::Lambda::Alias
+    Properties:
+      Description: !Sub "Live Traffic function alias for ${LambdaName}"
+      FunctionName: !Ref LambdaMicroserviceFunction
+      FunctionVersion: !GetAtt FunctionVersion.Version
+      Name: "live"

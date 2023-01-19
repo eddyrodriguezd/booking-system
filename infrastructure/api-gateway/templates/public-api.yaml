@@ -15,9 +15,6 @@ Parameters:
     Type: String
     Default: ""
 
-Conditions:
-  WillRetain: !Not [!Equals [!Ref RetentionInDays, ""]]
-
 Resources:
   API:
     Type: AWS::CloudFormation::Stack
@@ -28,4 +25,18 @@ Resources:
         Module: !Ref Module
         Environment: !Ref Environment
         RetentionInDays: !Ref RetentionInDays
+        APIAccess: "public"
+
+  #--------------------------------------------------------
+  #---------------------- AUTHORIZER ----------------------
+  #--------------------------------------------------------
+  Authorizers:
+    DependsOn: API
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "./api-authorizer.yaml"
+      Parameters:
+        Application: !Ref Application
+        Module: !Ref Module
+        Environment: !Ref Environment
         APIAccess: "public"

@@ -21,6 +21,7 @@ public class HotelRepositoryImpl implements HotelRepository {
     @Override
     public List<Room> getHotelRooms(Connection connection) {
         try {
+            log.info("Query that will be executed: <{}>", GET_HOTEL_ROOMS_QUERY);
             PreparedStatement preparedStatement = connection.prepareStatement(GET_HOTEL_ROOMS_QUERY);
             ResultSet rs = preparedStatement.executeQuery();
 

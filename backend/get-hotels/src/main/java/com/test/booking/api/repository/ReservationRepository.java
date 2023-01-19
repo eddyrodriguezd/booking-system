@@ -1,6 +1,5 @@
 package com.test.booking.api.repository;
 
-import com.test.booking.api.model.Room;
 import com.test.booking.commons.model.Reservation;
 
 import java.sql.Connection;

@@ -1,0 +1,44 @@
+Version: 3
+
+## Application Wide Settings
+APPLICATION_SETTINGS: &APPLICATION_SETTINGS
+  Application: booking
+  Module: auth
+
+Blueprints:
+  cognito:
+    Region: us-east-1
+    Template: ./templates/cognito.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+
+Stages:
+  test:
+    cognito-public:
+      Extends: cognito
+      StackName: cognito-public-user-pool
+      Parameters:
+        Environment: test
+        CallbackUrl: https://www.example.com/
+        LogoutUrl: https://www.example.com/logout
+        APIAccess: public
+        AccessTokenValidity: 60
+        IdTokenValidity: 1440
+        RefreshTokenValidity: 43200
+        TokenValidityUnits: minutes
+
+    cognito-admin:
+      Extends: cognito
+      StackName: cognito-admin-user-pool
+      Parameters:
+        Environment: test
+        CallbackUrl: https://www.example.com/
+        LogoutUrl: https://www.example.com/logout
+        APIAccess: private
+        AccessTokenValidity: 60
+        IdTokenValidity: 1440
+        RefreshTokenValidity: 43200
+        TokenValidityUnits: minutes

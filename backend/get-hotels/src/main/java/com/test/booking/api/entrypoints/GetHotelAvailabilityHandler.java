@@ -26,15 +26,20 @@ public class GetHotelAvailabilityHandler implements RequestHandler<APIGatewayV2H
             String roomId = event.getPathParameters().get("room_id");
             log.info("Getting availability for room <{}>", roomId);
             List<LocalDate> availableDates = ReservationService.getAvailabilityByRoomId(connection, UUID.fromString(roomId));
+            String responseBody = MapperConfig.getObjectMapper().writeValueAsString(
+                    availableDates
+            );
             return APIGatewayV2HTTPResponse.builder()
                     .withStatusCode(200)
-                    .withBody(MapperConfig.getObjectMapper().writeValueAsString(availableDates))
+                    .withBody(responseBody)
                     .build();
         }
         catch (ApiException e) {
+            log.error("API Exception encountered: <{}>", e.getBody().toString());
             return APIGatewayV2HTTPResponse.builder().withStatusCode(e.getStatus()).withBody(e.getBody().toString()).build();
         }
         catch (Exception e) {
+            log.error("Unexpected exception encountered: <{}>", e.getMessage());
             return APIGatewayV2HTTPResponse.builder().withStatusCode(500).withBody("Unexpected Exception").build();
         }
     }

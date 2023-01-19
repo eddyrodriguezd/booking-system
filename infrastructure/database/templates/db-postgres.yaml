@@ -78,6 +78,14 @@ Resources:
         PasswordLength: 16
         ExcludeCharacters: "'@/\"\\"
 
+  DatabaseSecretArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/secret: Database Credentials Secret Arn"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/secret/arn"
+      Type: String
+      Value: !Ref DatabaseSecret
+
   #---------------------------------------------------------
   #------------------- DATABASE INSTANCE -------------------
   #---------------------------------------------------------

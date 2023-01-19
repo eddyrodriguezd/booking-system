@@ -15,9 +15,9 @@ Blueprints:
     Parameters:
       <<: *APPLICATION_SETTINGS
 
-  public-api:
+  api-base:
     Region: us-east-1
-    Template: ./templates/public-api.yaml
+    Template: ./templates/api-base.yaml
     StackPolicy: ALLOW_ALL
     Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
     Package: true
@@ -42,20 +42,90 @@ Stages:
         Environment: test
 
     public-api:
-      Extends: public-api
+      Extends: api-base
       StackName: public-api
       Parameters:
         Environment: test
+        APIAccess: public
+        RetentionInDays: 7
+
+    private-api:
+      Extends: api-base
+      StackName: private-api
+      Parameters:
+        Environment: test
+        APIAccess: private
+        RetentionInDays: 7
 
     #--------------------------------------------------------------
     #---------------------- PUBLIC RESOURCES ----------------------
     #--------------------------------------------------------------
-    api-resource-get-hotels:
+    api-resource-hotels:
       Extends: apigw-resource
-      StackName: api-resource-get-hotels
+      StackName: api-resource-hotels
       Parameters:
         Environment: test
-        APIAccess: "public"
+        APIAccess: public
         MicroserviceParentPath: "/"
         MicroserviceResourceName: "hotels"
+        IsResourcePathParameter: false
+
+    api-resource-hotels-rooms:
+      Extends: apigw-resource
+      StackName: api-resource-hotel-rooms
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/hotels"
+        MicroserviceResourceName: "rooms"
+        IsResourcePathParameter: false
+
+    api-resource-hotels-rooms-room-id:
+      Extends: apigw-resource
+      StackName: api-resource-hotel-rooms-room-id
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/hotels/rooms"
+        MicroserviceResourceName: "room_id"
+        IsResourcePathParameter: true
+
+    api-resource-hotels-rooms-room-id-availability:
+      Extends: apigw-resource
+      StackName: api-resource-hotel-rooms-room-id-availability
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/hotels/rooms/room_id"
+        MicroserviceResourceName: "availability"
+        IsResourcePathParameter: false
+
+    api-resource-reservations:
+      Extends: apigw-resource
+      StackName: api-resource-reservations
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/"
+        MicroserviceResourceName: "reservations"
+        IsResourcePathParameter: false
+
+    api-resource-reservations-reservation-id:
+      Extends: apigw-resource
+      StackName: api-resource-reservations
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/reservations"
+        MicroserviceResourceName: "reservation_id"
+        IsResourcePathParameter: true
+
+    api-resource-admin-reservations:
+      Extends: apigw-resource
+      StackName: api-resource-admin-reservations
+      Parameters:
+        Environment: test
+        APIAccess: private
+        MicroserviceParentPath: "/"
+        MicroserviceResourceName: "reservations"
         IsResourcePathParameter: false

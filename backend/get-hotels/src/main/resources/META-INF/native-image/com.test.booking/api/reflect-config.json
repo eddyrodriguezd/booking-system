@@ -1,5 +1,14 @@
 [
   {
+    "name": "java.time.LocalDate",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
     "name": "com.test.booking.api.entrypoints.GetHotelsHandler",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

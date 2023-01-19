@@ -1,0 +1,44 @@
+Version: 3
+
+APPLICATION_SETTINGS: &APPLICATION_SETTINGS
+  Application: booking
+  Module: api
+
+LAMBDA_PARAMETERS: &LAMBDA_PARAMETERS
+  LambdaFunctionMemorySize: 256
+  LambdaFunctionTimeout: 20
+
+Blueprints:
+  lambda-service:
+    Region: us-east-1
+    Template: ./templates/lambda-service.yaml
+    StackPolicy: ALLOW_ALL
+    Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM]
+    Package: true
+    Parameters:
+      <<: *APPLICATION_SETTINGS
+      <<: *LAMBDA_PARAMETERS
+
+Stages:
+  test:
+    lambda-get-hotels:
+      Extends: lambda-service
+      StackName: get-hotels-function
+      Parameters:
+        Environment: test
+        LambdaName: get-hotels
+        LambdaHandler: "com.test.booking.api.entrypoints.GetHotelsHandler::handleRequest"
+        # API Gateway
+        ApiFullResourcePath: "/hotels"
+        ApiHttpMethod: "GET"
+
+    lambda-get-hotel-room-availability:
+      Extends: lambda-service
+      StackName: get-hotel-room-availability-function
+      Parameters:
+        Environment: test
+        LambdaName: get-hotel-room-availability
+        LambdaHandler: "com.test.booking.api.entrypoints.GetHotelAvailabilityHandler::handleRequest"
+        # API Gateway
+        ApiFullResourcePath: "/hotels/rooms/room_id/availability"
+        ApiHttpMethod: "GET"

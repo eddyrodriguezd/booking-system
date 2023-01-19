@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "LAMBDA: API Gateway Method"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  # Lambda Params
+  LambdaName:
+    Type: String
+    Description: "Unique identifier for the Lambda function. Also the zip file name for Lambda pipeline."
+
+  ## API Gateway Params
+  ApiFullResourcePath:
+    Type: String
+  APIAccess:
+    Type: String
+  ApiHttpMethod:
+    Type: String
+
+Conditions:
+  PathIsRoot: !Equals [!Ref ApiFullResourcePath, "/"]
+  IsAPIPublic: !Equals [!Ref APIAccess, "public"]
+
+Resources:
+  #----------------------------------------------------
+  #---------------------- API GW ----------------------
+  #----------------------------------------------------
+  APIGWRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "apigateway.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${Environment}-${Application}-${Module}-${LambdaName}-api-role"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource:
+                  !Join [
+                    ":",
+                    [
+                      !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/arn}}",
+                      "live",
+                    ],
+                  ]
+  APIGWMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: !Ref ApiHttpMethod
+      AuthorizationScopes:
+        - email
+        - openid
+        - profile
+        - aws.cognito.signin.user.admin
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/cognito-authorizer/id}}"
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        ConnectionType: INTERNET
+        Credentials: !GetAtt APIGWRole.Arn
+        Uri: !Sub
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${function_arn}:live/invocations"
+          - function_arn: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/arn}}"
+        RequestParameters:
+          integration.request.header.Accept: "'application/json'"
+        IntegrationResponses:
+          - StatusCode: "200"
+          - SelectionPattern: "HTTP 400.*"
+            StatusCode: "400"
+          - SelectionPattern: "HTTP 404.*"
+            StatusCode: "404"
+          - SelectionPattern: "HTTP 500.*"
+            StatusCode: "500"
+      ResourceId:
+        Fn::If:
+          - PathIsRoot
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/root-resource/id}}"
+          - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}${ApiFullResourcePath}/parent-resource/id}}"
+      RestApiId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/id}}"
+      MethodResponses:
+        - StatusCode: "200"
+        - StatusCode: "400"
+        - StatusCode: "404"
+        - StatusCode: "500"
+
+  APIDeployment:
+    DependsOn: APIGWMethod
+    Type: "AWS::ApiGateway::Deployment"
+    Properties:
+      RestApiId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/id}}"
+      Description: !Sub "Deploying API ${LambdaName}"
+      StageName: !Ref Environment

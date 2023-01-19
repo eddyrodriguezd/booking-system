@@ -26,9 +26,11 @@ public class GetHotelsHandler implements RequestHandler<APIGatewayV2HTTPEvent, A
             return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(hotels.toString()).build();
         }
         catch (ApiException e) {
+            log.error("API Exception encountered: <{}>", e.getBody().toString());
             return APIGatewayV2HTTPResponse.builder().withStatusCode(e.getStatus()).withBody(e.getBody().toString()).build();
         }
         catch (Exception e) {
+            log.error("Unexpected exception encountered: <{}>", e.getMessage());
             return APIGatewayV2HTTPResponse.builder().withStatusCode(500).withBody("Unexpected Exception").build();
         }
     }

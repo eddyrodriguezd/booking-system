@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "LAMBDA: IAM Role"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  LambdaName:
+    Type: String
+    Description: "Unique identifier for the Lambda function."
+
+Resources:
+  #--------------------------------------------------------------
+  #---------------------- ROLE & PARAMETER ----------------------
+  #--------------------------------------------------------------
+  LambdaFunctionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub "${Environment}-${Application}-${Module}-${LambdaName}-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "${Environment}-${Application}-${Module}-${LambdaName}-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: "BasicLambdaVPCPolicy"
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:CreateLogGroup"
+                  - "logs:PutLogEvents"
+                  - "ec2:CreateNetworkInterface"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DeleteNetworkInterface"
+                Resource: "*"
+              - Sid: "AccessToSecretsManager"
+                Effect: "Allow"
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:DescribeSecret"
+                Resource: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/db/secret/arn}}"
+
+  LambdaRoleArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${LambdaName}/role: Lambda Role Arn."
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/role/arn"
+      Type: String
+      Value: !GetAtt LambdaFunctionRole.Arn

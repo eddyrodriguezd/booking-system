@@ -245,3 +245,15 @@ Resources:
         - !Ref PrivateSubnetA
       VpcEndpointType: Interface
       VpcId: !GetAtt Vpc.VpcId
+
+  #EndpointSecretsManagerPrivateSubnetB:
+  #  Type: "AWS::EC2::VPCEndpoint"
+  #  Properties:
+  #    PrivateDnsEnabled: true
+  #    SecurityGroupIds:
+  #      - !Ref LambdaSecurityGroup
+  #    ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
+  #    SubnetIds:
+  #      - !Ref PrivateSubnetB
+  #    VpcEndpointType: Interface
+  #    VpcId: !GetAtt Vpc.VpcId

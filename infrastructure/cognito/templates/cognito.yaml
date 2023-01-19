@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AUTH: Cognito User Pool"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  APIAccess:
+    Type: String
+    AllowedValues: [public, private]
+
+  CallbackUrl:
+    Type: String
+  LogoutUrl:
+    Type: String
+  AccessTokenValidity:
+    Type: Number
+  IdTokenValidity:
+    Type: Number
+  RefreshTokenValidity:
+    Type: Number
+  TokenValidityUnits:
+    Type: String
+    AllowedValues: [seconds, minutes, hours, days]
+
+Resources:
+  SNSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cognito-idp.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "CognitoSNSPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "sns:publish"
+                Resource: "*"
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${Environment}-${Application}-${Module}-${APIAccess}-user-pool"
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AutoVerifiedAttributes:
+        - email
+      SmsConfiguration:
+        ExternalId: !Sub "${Environment}-${Application}-${Module}-${APIAccess}-external"
+        SnsCallerArn: !GetAtt SNSRole.Arn
+      MfaConfiguration: "OPTIONAL"
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+
+  UserPoolIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${APIAccess}: Cognito User Pool ID"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/user-pool/id"
+      Type: String
+      Value: !Ref UserPool
+
+  UserPoolArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${APIAccess}: Cognito User Pool Arn"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/user-pool/arn"
+      Type: String
+      Value: !GetAtt UserPool.Arn
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      AccessTokenValidity: !Ref AccessTokenValidity
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+        - aws.cognito.signin.user.admin
+      CallbackURLs:
+        - !Ref CallbackUrl
+      ClientName: !Sub "${Environment}-${Application}-${Module}-${APIAccess}-client"
+      ExplicitAuthFlows:
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+      IdTokenValidity: !Ref IdTokenValidity
+      PreventUserExistenceErrors: ENABLED
+      RefreshTokenValidity: !Ref RefreshTokenValidity
+      LogoutURLs:
+        - !Ref LogoutUrl
+      SupportedIdentityProviders:
+        - COGNITO
+      TokenValidityUnits:
+        AccessToken: !Ref TokenValidityUnits
+        IdToken: !Ref TokenValidityUnits
+        RefreshToken: !Ref TokenValidityUnits
+      UserPoolId: !Ref UserPool
+
+  UserPoolClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${APIAccess}: Cognito User Pool Client ID"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/user-pool/client/id"
+      Type: String
+      Value: !Ref UserPoolClient
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${Environment}-${Application}-${Module}-${APIAccess}"
+      UserPoolId: !Ref UserPool
+
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub "${Environment}-${Application}-${Module}-${APIAccess}-identity"
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName

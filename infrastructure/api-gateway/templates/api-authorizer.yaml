@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "API GW: Authorizer"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  APIAccess:
+    Type: String
+    AllowedValues: ["public", "private"]
+
+Resources:
+  #---------------------------------------------------------------
+  #---------------------- COGNITO AUTHORIZER ---------------------
+  #---------------------------------------------------------------
+  ApiCognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      AuthorizerResultTtlInSeconds: 300
+      IdentitySource: method.request.header.Authorization
+      Name: !Sub "${Environment}-${Application}-${Module}-cognito-authorizer"
+      ProviderARNs:
+        - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/auth/${APIAccess}/user-pool/arn}}"
+      RestApiId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/id}}"
+      Type: COGNITO_USER_POOLS
+
+  ApiCognitoAuthorizerIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}: API Gateway Cognito Authorizer ID"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/cognito-authorizer/id"
+      Type: String
+      Value: !Ref ApiCognitoAuthorizer

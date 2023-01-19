@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "LAMBDA: Lambda Service (Function + API method)"
+
+Parameters:
+  Application:
+    Type: String
+  Module:
+    Type: String
+  Environment:
+    Type: String
+    AllowedValues: [dev, test, stg, prod]
+
+  LambdaName:
+    Type: String
+    Description: "Unique identifier for the Lambda function"
+  LambdaHandler:
+    Type: String
+
+  # Lambda Parameters
+  LambdaFunctionMemorySize:
+    Description: "Lambda Function Memory"
+    Type: Number
+    AllowedValues: [128, 256, 384, 512]
+  LambdaFunctionTimeout:
+    Description: "Lambda Function Timeout"
+    Type: Number
+    MinValue: 1
+    MaxValue: 900
+
+  # API Gateway Parameters
+  APIAccess:
+    Type: String
+    AllowedValues: ["public", "private"]
+    Default: "public"
+  ApiHttpMethod:
+    Type: String
+    AllowedValues: [ANY, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+    Default: ANY
+  ApiFullResourcePath:
+    Type: String
+
+Resources:
+  #------------------------------------------------------
+  #---------------------- IAM ROLE ----------------------
+  #------------------------------------------------------
+  LambdaIamRoleMethod:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "lambda-role.yaml"
+      Parameters:
+        Application: !Ref Application
+        Module: !Ref Module
+        Environment: !Ref Environment
+        LambdaName: !Ref LambdaName
+
+  #------------------------------------------------------
+  #---------------------- FUNCTION ----------------------
+  #------------------------------------------------------
+  LambdaFunction:
+    DependsOn: LambdaIamRoleMethod
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "lambda-function.yaml"
+      Parameters:
+        Application: !Ref Application
+        Module: !Ref Module
+        Environment: !Ref Environment
+        LambdaName: !Ref LambdaName
+        LambdaHandler: !Ref LambdaHandler
+        LambdaFunctionMemorySize: !Ref LambdaFunctionMemorySize
+        LambdaFunctionTimeout: !Ref LambdaFunctionTimeout
+
+  #----------------------------------------------------
+  #---------------------- API GW ----------------------
+  #----------------------------------------------------
+  LambdaApiGatewayMethod:
+    DependsOn: LambdaFunction
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "api-method.yaml"
+      Parameters:
+        Application: !Ref Application
+        Module: !Ref Module
+        Environment: !Ref Environment
+        LambdaName: !Ref LambdaName
+        APIAccess: !Ref APIAccess
+        ApiHttpMethod: !Ref ApiHttpMethod
+        ApiFullResourcePath: !Ref ApiFullResourcePath
