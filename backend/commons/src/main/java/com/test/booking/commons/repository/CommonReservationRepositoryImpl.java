@@ -2,6 +2,7 @@ package com.test.booking.commons.repository;
 
 import com.test.booking.commons.exception.DatabaseAccessException;
 import com.test.booking.commons.model.Reservation;
+import com.test.booking.commons.model.enums.ReservationStatus;
 import com.test.booking.commons.util.db.DBUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.util.PGobject;
@@ -11,16 +12,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class CommonReservationRepositoryImpl implements CommonReservationRepository {
 
-    private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT checkin_date, checkout_date FROM booking.reservations WHERE room_id = ? ORDER BY checkin_date";
+    private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT check_in_date, check_out_date FROM booking.reservations WHERE room_id = ? AND status = 'VALID' ORDER BY checkin_date";
 
     @Override
     public List<Reservation> getReservationsByRoomId(Connection connection, UUID roomId) {
@@ -33,20 +32,21 @@ public class CommonReservationRepositoryImpl implements CommonReservationReposit
 
             List<Reservation> reservations = new ArrayList<>();
             while (rs.next()) {
+                LocalDate checkInDate = LocalDate.parse(rs.getString("check_in_date"));
+                LocalDate checkOutDate = LocalDate.parse(rs.getString("check_out_date"));
+
                 reservations.add(
                         Reservation.builder()
-                                .stay(
-                                        LocalDate.parse(rs.getString("checkin_date")).datesUntil(
-                                                LocalDate.parse(rs.getString("checkout_date")).plus(Period.ofDays(1))
-                                        ).collect(Collectors.toList())
-                                )
+                                .checkInDate(checkInDate)
+                                .checkOutDate(checkOutDate)
+                                //.stay(checkInDate.datesUntil(checkOutDate.plus(Period.ofDays(1))).collect(Collectors.toList()))
+                                .status(ReservationStatus.VALID)
                                 .build()
                 );
             }
 
             log.info("Reservations retrieved from database: <{}>", reservations);
             return reservations;
-
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY, e.getMessage(), e.getStackTrace());

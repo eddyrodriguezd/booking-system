@@ -6,6 +6,6 @@ import software.amazon.awssdk.http.HttpStatusCode;
 public class UUIDParsingException extends ApiException {
 
     public UUIDParsingException(String str) {
-        super("003", HttpStatusCode.INTERNAL_SERVER_ERROR, "UUID <" + str + "> couldn't be set as a Postgres Object with type 'uuid'");
+        super("004", HttpStatusCode.INTERNAL_SERVER_ERROR, "UUID <" + str + "> couldn't be set as a Postgres Object with type 'uuid'");
     }
 }

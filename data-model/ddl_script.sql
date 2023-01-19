@@ -7,10 +7,10 @@ CREATE SCHEMA booking;
 -- Create "hotels" table
 CREATE TABLE booking.hotels 
 ( 
-  id uuid default uuid_generate_v4 () primary key,
-  name VARCHAR(255) not null,
-  country_code VARCHAR(2) not null,
-  city VARCHAR(60) not null,
+  id uuid default uuid_generate_v4 () PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  country_code VARCHAR(2) NOT NULL,
+  city VARCHAR(60) NOT NULL,
   latitude float8,
   longitude float8
 );
@@ -18,12 +18,12 @@ CREATE TABLE booking.hotels
 -- Create "rooms" table
 CREATE TABLE booking.rooms 
 ( 
-  id uuid DEFAULT uuid_generate_v4 () primary key,
-  hotel_id uuid not NULL,
+  id uuid DEFAULT uuid_generate_v4 () PRIMARY KEY,
+  hotel_id uuid NOT NULL,
   type VARCHAR(50),
-  number_of_guests smallint not null,
-  daily_rate int4 not null,
-  currency_code VARCHAR(3) not null,
+  number_of_guests smallint NOT NULL,
+  daily_rate int4 NOT NULL,
+  currency_code VARCHAR(3) NOT NULL,
   constraint fk_hotel_id
      foreign key (hotel_id) 
      REFERENCES booking.hotels (id)
@@ -32,11 +32,12 @@ CREATE TABLE booking.rooms
 -- Create "reservations" table
 CREATE TABLE booking.reservations 
 ( 
-  id uuid DEFAULT uuid_generate_v4 () primary key,
-  room_id uuid not NULL,
-  checkin_date date not null,
-  checkout_date date not null,
-  guest_id uuid not NULL,
+  id uuid DEFAULT uuid_generate_v4 () PRIMARY KEY,
+  room_id uuid NOT NULL,
+  check_in_date date NOT NULL,
+  check_out_date date NOT NULL,
+  guest_id uuid NOT NULL,
+  status VARCHAR(20) NOT NULL,
   constraint fk_room_id
      foreign key (room_id) 
      REFERENCES booking.rooms (id)
