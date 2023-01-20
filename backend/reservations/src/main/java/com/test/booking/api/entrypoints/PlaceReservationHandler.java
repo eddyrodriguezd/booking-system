@@ -22,8 +22,13 @@ public class PlaceReservationHandler implements RequestHandler<APIGatewayV2HTTPE
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
         try {
+            String cognitoUserId = event.getRequestContext().getAuthorizer().getJwt().getClaims().get("sub");
+            log.info("Placing reservations for user=<{}>", cognitoUserId);
+
             ReservationDto reservationDto = MapperConfig.getObjectMapper().readValue(event.getBody(), ReservationDto.class);
             log.info("Reservation received from body: <{}>", reservationDto);
+            reservationDto.setGuestId(cognitoUserId);
+
             Reservation reservationCreated = ReservationService.placeReservation(connection, reservationDto);
             return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(reservationCreated.toString()).build();
         }

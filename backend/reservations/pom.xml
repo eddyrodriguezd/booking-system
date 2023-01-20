@@ -93,7 +93,7 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
-                                    <finalName>function</finalName>
+                                    <finalName>reservations</finalName>
                                     <descriptors>
                                         <descriptor>src/main/java/com/test/booking/api/assembly/zip.xml</descriptor>
                                     </descriptors>

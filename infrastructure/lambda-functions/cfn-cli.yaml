@@ -7,6 +7,7 @@ APPLICATION_SETTINGS: &APPLICATION_SETTINGS
 LAMBDA_PARAMETERS: &LAMBDA_PARAMETERS
   LambdaFunctionMemorySize: 256
   LambdaFunctionTimeout: 20
+  LambdaZipS3Bucket: booking-zip-files
 
 Blueprints:
   lambda-service:
@@ -21,13 +22,14 @@ Blueprints:
 
 Stages:
   test:
-    lambda-get-hotels:
+    lambda-get-hotels-and-rooms:
       Extends: lambda-service
-      StackName: get-hotels-function
+      StackName: get-hotels-and-rooms-function
       Parameters:
         Environment: test
-        LambdaName: get-hotels
+        LambdaName: get-hotels-and-rooms
         LambdaHandler: "com.test.booking.api.entrypoints.GetHotelsHandler::handleRequest"
+        LambdaZipS3Key: hotels.zip
         # API Gateway
         ApiFullResourcePath: "/hotels"
         ApiHttpMethod: "GET"
@@ -39,6 +41,72 @@ Stages:
         Environment: test
         LambdaName: get-hotel-room-availability
         LambdaHandler: "com.test.booking.api.entrypoints.GetHotelAvailabilityHandler::handleRequest"
+        LambdaZipS3Key: hotels.zip
         # API Gateway
         ApiFullResourcePath: "/hotels/rooms/room_id/availability"
+        ApiHttpMethod: "GET"
+
+    lambda-get-user-reservations:
+      Extends: lambda-service
+      StackName: get-user-reservations-function
+      Parameters:
+        Environment: test
+        LambdaName: get-user-reservations
+        LambdaHandler: "com.test.booking.api.entrypoints.GetReservationsHandler::handleRequest"
+        LambdaZipS3Key: reservations.zip
+        # API Gateway
+        ApiFullResourcePath: "/reservations"
+        ApiHttpMethod: "GET"
+
+    lambda-place-reservation:
+      Extends: lambda-service
+      StackName: place-reservation-function
+      Parameters:
+        Environment: test
+        LambdaName: place-reservation
+        LambdaHandler: "com.test.booking.api.entrypoints.PlaceReservationHandler::handleRequest"
+        LambdaZipS3Key: reservations.zip
+        # API Gateway
+        ApiFullResourcePath: "/reservations"
+        ApiHttpMethod: "POST"
+
+    lambda-modify-reservation:
+      Extends: lambda-service
+      StackName: modify-reservation-function
+      Parameters:
+        Environment: test
+        LambdaName: modify-reservation
+        LambdaHandler: "com.test.booking.api.entrypoints.ModifyReservationHandler::handleRequest"
+        LambdaZipS3Key: reservations.zip
+        # API Gateway
+        ApiFullResourcePath: "/reservations"
+        ApiHttpMethod: "PUT"
+
+    lambda-cancel-reservation:
+      Extends: lambda-service
+      StackName: cancel-reservation-function
+      Parameters:
+        Environment: test
+        LambdaName: cancel-reservation
+        LambdaHandler: "com.test.booking.api.entrypoints.CancelReservationHandler::handleRequest"
+        LambdaZipS3Key: reservations.zip
+        # API Gateway
+        ApiFullResourcePath: "/reservations/reservation_id/cancel"
+        ApiHttpMethod: "PUT"
+
+    #--------------------------------------------------------------
+    #---------------------- ADMIN RESOURCES ----------------------
+    #--------------------------------------------------------------
+
+    lambda-admin-get-reservations:
+      Extends: lambda-service
+      StackName: admin-get-reservations-function
+      Parameters:
+        Environment: test
+        LambdaName: admin-get-reservations
+        LambdaHandler: "com.test.booking.api.entrypoints.GetReservationsHandler::handleRequest"
+        LambdaZipS3Key: reservations.zip
+        # API Gateway
+        APIAccess: private
+        ApiFullResourcePath: "/reservations"
         ApiHttpMethod: "GET"

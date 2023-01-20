@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.test.booking.commons.config.mapper.MapperConfig;
 import com.test.booking.commons.exception.JsonParsingException;
 import com.test.booking.commons.model.Reservation;
-import com.test.booking.commons.model.enums.ReservationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

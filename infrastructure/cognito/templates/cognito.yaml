@@ -154,3 +154,11 @@ Resources:
       CognitoIdentityProviders:
         - ClientId: !Ref UserPoolClient
           ProviderName: !GetAtt UserPool.ProviderName
+
+  IdentityPoolIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "${Environment}/${Application}/${Module}/${APIAccess}/identity-pool/id: Cognito Identity Pool ID"
+      Name: !Sub "/cf/${Environment}/${Application}/${Module}/${APIAccess}/identity-pool/id"
+      Type: String
+      Value: !Ref IdentityPool

@@ -1,5 +1,8 @@
 package com.test.booking.commons.exception.common;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.test.booking.commons.config.mapper.MapperConfig;
+import com.test.booking.commons.exception.JsonParsingException;
 import lombok.*;
 
 @Getter
@@ -29,7 +32,11 @@ public class ApiException extends RuntimeException {
 
         @Override
         public String toString() {
-            return "ApiException.Body(code=" + code + ", message=" + message + ")";
+            try {
+                return MapperConfig.getObjectMapper().writeValueAsString(this);
+            } catch (JsonProcessingException e) {
+                throw new JsonParsingException(this.getClass().getName());
+            }
         }
     }
 }

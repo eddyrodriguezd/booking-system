@@ -16,6 +16,11 @@ Parameters:
   LambdaHandler:
     Type: String
 
+  LambdaZipS3Bucket:
+    Type: String
+  LambdaZipS3Key:
+    Type: String
+
   LambdaFunctionMemorySize:
     Description: "Lambda Function Memory"
     Type: Number
@@ -28,18 +33,20 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: !Sub "${Environment}-${Application}-${LambdaName}"
-      FunctionName: !Sub "${Environment}-${Application}-${LambdaName}"
+      FunctionName: !Sub "${Application}-${LambdaName}"
       Handler: !Sub "${LambdaHandler}"
       Runtime: provided.al2
       Code:
-        S3Bucket: booking-zip-files
-        S3Key: hotels.zip
+        S3Bucket: !Ref LambdaZipS3Bucket
+        S3Key: !Ref LambdaZipS3Key
       MemorySize: !Ref LambdaFunctionMemorySize
       Role: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/role/arn}}"
       Timeout: !Ref LambdaFunctionTimeout
       Environment:
         Variables:
           RDS_SECRET_ARN: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/db/secret/arn}}"
+          ADMIN_IDENTITY_POOL_ID: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/auth/private/identity-pool/id}}"
+          USER_IDENTITY_POOL_ID: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/auth/public/identity-pool/id}}"
           LOG_LEVEL: INFO
       VpcConfig:
         SecurityGroupIds:

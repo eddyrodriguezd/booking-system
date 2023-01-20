@@ -29,9 +29,6 @@ public class ReservationService {
 
         reservation = RepositoryFactory.getReservationRepository().createReservation(connection, reservation);
         log.info("Reservation <{}> was successfully created", reservation);
-
-        //reservationDto.setReservationId(reservation.getReservationId().toString());
-        //reservationDto.setStatus(reservation.getStatus());
         return reservation;
     }
 

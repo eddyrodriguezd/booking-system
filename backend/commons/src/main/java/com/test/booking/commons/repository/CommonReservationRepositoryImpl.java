@@ -19,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 public class CommonReservationRepositoryImpl implements CommonReservationRepository {
 
-    private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT check_in_date, check_out_date FROM booking.reservations WHERE room_id = ? AND status = 'VALID' ORDER BY checkin_date";
+    private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT check_in_date, check_out_date FROM booking.reservations WHERE room_id = ? AND status = 'VALID' ORDER BY check_in_date;";
 
     @Override
     public List<Reservation> getValidReservationsByRoomId(Connection connection, UUID roomId) {

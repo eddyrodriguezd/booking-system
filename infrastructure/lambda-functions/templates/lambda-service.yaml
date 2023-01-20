@@ -16,6 +16,11 @@ Parameters:
   LambdaHandler:
     Type: String
 
+  LambdaZipS3Bucket:
+    Type: String
+  LambdaZipS3Key:
+    Type: String
+
   # Lambda Parameters
   LambdaFunctionMemorySize:
     Description: "Lambda Function Memory"
@@ -67,6 +72,8 @@ Resources:
         Environment: !Ref Environment
         LambdaName: !Ref LambdaName
         LambdaHandler: !Ref LambdaHandler
+        LambdaZipS3Bucket: !Ref LambdaZipS3Bucket
+        LambdaZipS3Key: !Ref LambdaZipS3Key
         LambdaFunctionMemorySize: !Ref LambdaFunctionMemorySize
         LambdaFunctionTimeout: !Ref LambdaFunctionTimeout
 

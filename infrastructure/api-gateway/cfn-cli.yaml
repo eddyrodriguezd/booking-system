@@ -112,13 +112,27 @@ Stages:
 
     api-resource-reservations-reservation-id:
       Extends: apigw-resource
-      StackName: api-resource-reservations
+      StackName: api-resource-reservations-reservation-id
       Parameters:
         Environment: test
         APIAccess: public
         MicroserviceParentPath: "/reservations"
         MicroserviceResourceName: "reservation_id"
         IsResourcePathParameter: true
+
+    api-resource-reservations-reservation-id-cancel:
+      Extends: apigw-resource
+      StackName: api-resource-reservations-reservation-id-cancel
+      Parameters:
+        Environment: test
+        APIAccess: public
+        MicroserviceParentPath: "/reservations/reservation_id"
+        MicroserviceResourceName: "cancel"
+        IsResourcePathParameter: false
+
+    #--------------------------------------------------------------
+    #---------------------- ADMIN RESOURCES ----------------------
+    #--------------------------------------------------------------
 
     api-resource-admin-reservations:
       Extends: apigw-resource

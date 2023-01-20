@@ -25,8 +25,8 @@ Resources:
   API:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub "${Environment}-${Application}-${Module}-${APIAccess}"
-      Description: !Sub "API GW (${APIAccess}) for ${Environment}/${Application}"
+      Name: !Sub "${Application}-${Module}-${APIAccess}"
+      Description: !Sub "API GW (${APIAccess}) for ${Application}"
       FailOnWarnings: true
       BinaryMediaTypes:
         - "multipart/form-data"
@@ -38,7 +38,7 @@ Resources:
   #---------------------- AUTHORIZER ----------------------
   #--------------------------------------------------------
   Authorizers:
-    DependsOn: API
+    DependsOn: [APIIdParameter]
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: "./api-authorizer.yaml"
