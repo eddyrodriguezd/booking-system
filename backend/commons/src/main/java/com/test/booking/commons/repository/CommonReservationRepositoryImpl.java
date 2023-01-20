@@ -22,7 +22,7 @@ public class CommonReservationRepositoryImpl implements CommonReservationReposit
     private static final String GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY = "SELECT check_in_date, check_out_date FROM booking.reservations WHERE room_id = ? AND status = 'VALID' ORDER BY checkin_date";
 
     @Override
-    public List<Reservation> getReservationsByRoomId(Connection connection, UUID roomId) {
+    public List<Reservation> getValidReservationsByRoomId(Connection connection, UUID roomId) {
         try {
             log.info("Query that will be executed: <{}>", GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY);
             PreparedStatement preparedStatement = connection.prepareStatement(GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY);

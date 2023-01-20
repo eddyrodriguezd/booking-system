@@ -1,5 +1,8 @@
 package com.test.booking.commons.model;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.test.booking.commons.config.mapper.MapperConfig;
+import com.test.booking.commons.exception.JsonParsingException;
 import com.test.booking.commons.model.enums.ReservationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,5 +34,14 @@ public class Reservation implements Serializable {
         return this.checkInDate.datesUntil(
                 this.checkOutDate.plus(Period.ofDays(1))
         ).collect(Collectors.toList());
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return MapperConfig.getObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(this.getClass().getName());
+        }
     }
 }

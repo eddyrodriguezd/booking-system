@@ -9,6 +9,7 @@ import com.test.booking.api.service.ReservationService;
 import com.test.booking.commons.config.db.DBConnectionService;
 import com.test.booking.commons.config.mapper.MapperConfig;
 import com.test.booking.commons.exception.common.ApiException;
+import com.test.booking.commons.model.Reservation;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -23,7 +24,7 @@ public class PlaceReservationHandler implements RequestHandler<APIGatewayV2HTTPE
         try {
             ReservationDto reservationDto = MapperConfig.getObjectMapper().readValue(event.getBody(), ReservationDto.class);
             log.info("Reservation received from body: <{}>", reservationDto);
-            ReservationDto reservationCreated = ReservationService.placeReservation(connection, reservationDto);
+            Reservation reservationCreated = ReservationService.placeReservation(connection, reservationDto);
             return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(reservationCreated.toString()).build();
         }
         catch (ApiException e) {

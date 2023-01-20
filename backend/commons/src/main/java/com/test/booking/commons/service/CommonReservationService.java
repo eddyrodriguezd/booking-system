@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class CommonReservationService {
 
     public static List<LocalDate> getAvailabilityByRoomId(Connection connection, UUID roomId) {
-        List<Reservation> reservations = CommonRepositoryFactory.getReservationRepository().getReservationsByRoomId(connection, roomId);
+        List<Reservation> reservations = CommonRepositoryFactory.getReservationRepository().getValidReservationsByRoomId(connection, roomId);
 
         LocalDate firstAvailableDate = LocalDate.now().plus(Period.ofDays(1)); // The next day
         LocalDate lastAvailableDate = firstAvailableDate.plus(Constants.RESERVATION_AVAILABLE_PERIOD);

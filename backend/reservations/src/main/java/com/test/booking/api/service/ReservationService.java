@@ -15,29 +15,37 @@ import java.util.UUID;
 @Slf4j
 public class ReservationService {
 
-    public static ReservationDto placeReservation(Connection connection, ReservationDto reservationDto) {
+    public static List<Reservation> getReservations(Connection connection, UUID guestId) {
+        List<Reservation> reservations = RepositoryFactory.getReservationRepository().getGuestReservations(connection, guestId);
+        log.info("Reservations retrieved for guest=<{}>: <{}>", guestId, reservations);
+        return reservations;
+    }
+
+    public static Reservation placeReservation(Connection connection, ReservationDto reservationDto) {
         List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(reservationDto.getRoomId()));
         Reservation reservation = reservationDto.toEntity();
 
-        if(!areReservationDatesValid(availableDates, reservation.getStay())) throw new InvalidReservationDatesException();
+        if(areReservationDatesInvalid(availableDates, reservation.getStay())) throw new InvalidReservationDatesException();
 
         reservation = RepositoryFactory.getReservationRepository().createReservation(connection, reservation);
         log.info("Reservation <{}> was successfully created", reservation);
 
-        reservationDto.setReservationId(reservation.getReservationId().toString());
-        return reservationDto;
+        //reservationDto.setReservationId(reservation.getReservationId().toString());
+        //reservationDto.setStatus(reservation.getStatus());
+        return reservation;
     }
 
-    public static ReservationDto modifyReservation(Connection connection, ReservationDto reservationDto) {
+    public static Reservation modifyReservation(Connection connection, UUID reservationId, ReservationDto reservationDto) {
         List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(reservationDto.getRoomId()));
         Reservation reservation = reservationDto.toEntity();
+        reservation.setReservationId(reservationId);
 
-        if(!areReservationDatesValid(availableDates, reservation.getStay())) throw new InvalidReservationDatesException();
+        if(areReservationDatesInvalid(availableDates, reservation.getStay())) throw new InvalidReservationDatesException();
 
         Reservation newReservation = RepositoryFactory.getReservationRepository().modifyReservation(connection, reservation);
         log.info("Reservation was successfully updated from <{}> to <{}>", reservation, newReservation);
 
-        return reservationDto;
+        return reservation;
     }
 
     public static void cancelReservation(Connection connection, String reservationId) {
@@ -45,9 +53,7 @@ public class ReservationService {
         log.info("Reservation with id=<{}> was successfully canceled", reservationId);
     }
 
-
-
-    protected static boolean areReservationDatesValid(List<LocalDate> availableDates, List<LocalDate> stay) {
-        return availableDates.containsAll(stay);
+    protected static boolean areReservationDatesInvalid(List<LocalDate> availableDates, List<LocalDate> stay) {
+        return !availableDates.containsAll(stay);
     }
 }

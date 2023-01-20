@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface CommonReservationRepository {
 
-    List<Reservation> getReservationsByRoomId(Connection connection, UUID roomId);
+    List<Reservation> getValidReservationsByRoomId(Connection connection, UUID roomId);
 }
