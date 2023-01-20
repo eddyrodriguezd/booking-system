@@ -8,9 +8,11 @@ import java.util.UUID;
 
 public interface ReservationRepository {
 
+    Reservation getReservationById(Connection connection, UUID reservationId);
+
     List<Reservation> getReservations(Connection connection);
 
-    List<Reservation> getGuestReservations(Connection connection, UUID guestId);
+    List<Reservation> getReservationsByUser(Connection connection, UUID guestId);
 
     Reservation createReservation(Connection connection, Reservation reservation);
 

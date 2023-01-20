@@ -13,6 +13,7 @@ import com.test.booking.commons.exception.common.ApiException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
+import java.util.UUID;
 
 @Slf4j
 public class CancelReservationHandler implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
@@ -22,13 +23,14 @@ public class CancelReservationHandler implements RequestHandler<APIGatewayV2HTTP
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
         try {
+            String cognitoUserId = event.getRequestContext().getAuthorizer().getJwt().getClaims().get("sub");
+            log.info("Cancelling reservation for user=<{}>", cognitoUserId);
+
             String reservationId = event.getPathParameters().get("reservation_id");
             log.info("Reservation with id=<{}> will be canceled", reservationId);
 
-            ReservationService.cancelReservation(connection, reservationId);
-            return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(
-                    Message.builder().message("Reservation with id=<" + reservationId + "> has been canceled").toString()
-            ).build();
+            Message cancelReservationMsg = ReservationService.cancelReservation(connection, UUID.fromString(reservationId), UUID.fromString(cognitoUserId));
+            return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(cancelReservationMsg.toString()).build();
         }
         catch (ApiException e) {
             log.error("API Exception encountered: <{}>", e.getBody().toString());

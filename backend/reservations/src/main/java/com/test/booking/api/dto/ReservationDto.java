@@ -10,7 +10,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.Period;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -21,6 +24,13 @@ public class ReservationDto {
     private String guestId;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
+
+    // Stay = [Check-in date inclusive; Check-out date inclusive]
+    public List<LocalDate> getStay() {
+        return this.checkInDate.datesUntil(
+                this.checkOutDate.plus(Period.ofDays(1))
+        ).collect(Collectors.toList());
+    }
 
     @Override
     public String toString() {

@@ -23,12 +23,15 @@ public class ModifyReservationHandler implements RequestHandler<APIGatewayV2HTTP
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
         try {
+            String cognitoUserId = event.getRequestContext().getAuthorizer().getJwt().getClaims().get("sub");
+            log.info("Modifying reservation for user=<{}>", cognitoUserId);
+
             String reservationId = event.getPathParameters().get("reservation_id");
             log.info("Reservation with id =<{}> will be updated", reservationId);
 
             ReservationDto reservationDto = MapperConfig.getObjectMapper().readValue(event.getBody(), ReservationDto.class);
 
-            Reservation reservationUpdated = ReservationService.modifyReservation(connection, UUID.fromString(reservationId), reservationDto);
+            Reservation reservationUpdated = ReservationService.modifyReservation(connection, UUID.fromString(reservationId), UUID.fromString(cognitoUserId), reservationDto);
 
             return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(reservationUpdated.toString()).build();
         }

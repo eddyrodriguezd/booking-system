@@ -1,5 +1,6 @@
 package com.test.booking.api.repository;
 
+import com.test.booking.api.exception.ReservationNotFoundException;
 import com.test.booking.commons.exception.DatabaseAccessException;
 import com.test.booking.commons.model.Reservation;
 import com.test.booking.commons.model.enums.ReservationStatus;
@@ -19,11 +20,37 @@ import java.util.UUID;
 @Slf4j
 public class ReservationRepositoryImpl implements ReservationRepository {
 
-    private static final String GET_ALL_RESERVATIONS = "SELECT id as reservation_id, room_id, checkin_date, checkout_date, guest_id, status FROM booking.reservations;";
-    private static final String GET_GUEST_RESERVATIONS = "SELECT id as reservation_id, room_id, checkin_date, checkout_date, guest_id, status FROM booking.reservations WHERE guest_id = ?;";
-    private static final String CREATE_RESERVATION = "INSERT INTO booking.reservations (room_id, checkin_date, checkout_date, guest_id, status) VALUES (?, ?, ?, ?, ?);";
+    private static final String GET_RESERVATION_BY_ID = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE id = ?;";
+    private static final String GET_ALL_RESERVATIONS = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations;";
+    private static final String GET_RESERVATIONS_BY_USER = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE guest_id = ?;";
+    private static final String CREATE_RESERVATION = "INSERT INTO booking.reservations (room_id, check_in_date, check_out_date, guest_id, status) VALUES (?, ?, ?, ?, ?);";
     private static final String MODIFY_RESERVATION = "UPDATE booking.reservations SET check_in_date = ?, check_out_date = ? where id = ?;";
     private static final String CANCEL_RESERVATION = "UPDATE booking.reservations SET status = 'CANCELED' where id = ?;";
+
+    @Override
+    public Reservation getReservationById(Connection connection, UUID reservationId) {
+        try {
+            log.info("Query that will be executed: <{}>", GET_RESERVATION_BY_ID);
+            PreparedStatement preparedStatement = connection.prepareStatement(GET_RESERVATION_BY_ID);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            rs.next();
+            if(!rs.isLast()) throw new ReservationNotFoundException(reservationId.toString());
+
+            return Reservation.builder()
+                    .reservationId(UUID.fromString(rs.getString("reservation_id")))
+                    .roomId(UUID.fromString(rs.getString("room_id")))
+                    .checkInDate(LocalDate.parse(rs.getString("check_in_date")))
+                    .checkOutDate(LocalDate.parse(rs.getString("check_out_date")))
+                    .guestId(UUID.fromString(rs.getString("guest_id")))
+                    .status(ReservationStatus.valueOf(rs.getString("status")))
+                    .build();
+        }
+        catch (SQLException e) {
+            log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATION_BY_ID, e.getMessage(), e.getStackTrace());
+            throw new DatabaseAccessException(GET_RESERVATION_BY_ID);
+        }
+    }
 
     @Override
     public List<Reservation> getReservations(Connection connection) {
@@ -54,10 +81,10 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     }
 
     @Override
-    public List<Reservation> getGuestReservations(Connection connection, UUID guestId) {
+    public List<Reservation> getReservationsByUser(Connection connection, UUID guestId) {
         try {
-            log.info("Query that will be executed: <{}>", GET_GUEST_RESERVATIONS);
-            PreparedStatement preparedStatement = connection.prepareStatement(GET_GUEST_RESERVATIONS);
+            log.info("Query that will be executed: <{}>", GET_RESERVATIONS_BY_USER);
+            PreparedStatement preparedStatement = connection.prepareStatement(GET_RESERVATIONS_BY_USER);
 
             PGobject guestIdPgObject = DBUtil.buildPostgresUUIDObject(guestId);
             preparedStatement.setObject(1, guestIdPgObject);
@@ -79,8 +106,8 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             return reservations;
         }
         catch (SQLException e) {
-            log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_GUEST_RESERVATIONS, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_GUEST_RESERVATIONS);
+            log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATIONS_BY_USER, e.getMessage(), e.getStackTrace());
+            throw new DatabaseAccessException(GET_RESERVATIONS_BY_USER);
         }
     }
 
