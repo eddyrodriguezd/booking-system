@@ -23,6 +23,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     private static final String GET_RESERVATION_BY_ID = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE id = ?;";
     private static final String GET_ALL_RESERVATIONS = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations;";
     private static final String GET_RESERVATIONS_BY_USER = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE guest_id = ?;";
+    private static final String GET_VALID_RESERVATIONS_BY_GUEST_ID = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE guest_id = ? AND status = 'VALID' AND (check_in_date = ? OR check_out_date = ?);";
     private static final String CREATE_RESERVATION = "INSERT INTO booking.reservations (room_id, check_in_date, check_out_date, guest_id, status) VALUES (?, ?, ?, ?, ?);";
     private static final String MODIFY_RESERVATION = "UPDATE booking.reservations SET check_in_date = ?, check_out_date = ? where id = ?;";
     private static final String CANCEL_RESERVATION = "UPDATE booking.reservations SET status = 'CANCELED' where id = ?;";
@@ -112,6 +113,41 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     }
 
     @Override
+    public List<Reservation> getValidReservationsByUserAndCheckInOrCheckOutDate(Connection connection, UUID guestId, LocalDate checkInDate, LocalDate checkOutDate) {
+        try {
+            log.info("Query that will be executed: <{}>", GET_VALID_RESERVATIONS_BY_GUEST_ID);
+            PreparedStatement preparedStatement = connection.prepareStatement(GET_VALID_RESERVATIONS_BY_GUEST_ID);
+
+            PGobject guestIdPgObject = DBUtil.buildPostgresUUIDObject(guestId);
+            preparedStatement.setObject(1, guestIdPgObject);
+            preparedStatement.setObject(2, checkInDate);
+            preparedStatement.setObject(3, checkOutDate);
+
+            ResultSet rs = preparedStatement.executeQuery();
+
+            List<Reservation> reservations = new ArrayList<>();
+            while (rs.next()) {
+                reservations.add(
+                        Reservation.builder()
+                                .reservationId(UUID.fromString(rs.getString("reservation_id")))
+                                .roomId(UUID.fromString(rs.getString("room_id")))
+                                .checkInDate(LocalDate.parse(rs.getString("check_in_date")))
+                                .checkOutDate(LocalDate.parse(rs.getString("check_out_date")))
+                                .guestId(UUID.fromString(rs.getString("guest_id")))
+                                .status(ReservationStatus.valueOf(rs.getString("status")))
+                                .build()
+                );
+            }
+
+            return reservations;
+        }
+        catch (SQLException e) {
+            log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_VALID_RESERVATIONS_BY_GUEST_ID, e.getMessage(), e.getStackTrace());
+            throw new DatabaseAccessException(GET_VALID_RESERVATIONS_BY_GUEST_ID);
+        }
+    }
+
+    @Override
     public Reservation createReservation(Connection connection, Reservation reservation) {
         try {
             log.info("Query that will be executed: <{}>", CREATE_RESERVATION);
@@ -166,7 +202,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     }
 
     @Override
-    public boolean cancelReservation(Connection connection, UUID reservationId) {
+    public void cancelReservation(Connection connection, UUID reservationId) {
         try {
             log.info("Query that will be executed: <{}>", CANCEL_RESERVATION);
             PreparedStatement preparedStatement = connection.prepareStatement(CANCEL_RESERVATION);
@@ -180,7 +216,6 @@ public class ReservationRepositoryImpl implements ReservationRepository {
                 log.error("SQL query <{}> failed. It didn't update any record.", CANCEL_RESERVATION);
                 throw new DatabaseAccessException(CANCEL_RESERVATION);
             }
-            return true;
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", CANCEL_RESERVATION, e.getMessage(), e.getStackTrace());

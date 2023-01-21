@@ -14,7 +14,8 @@ public class InvalidReservationDatesException extends ApiException {
         CHECK_IN_GREATER_THAN_CHECK_OUT("Check-out date must be equal or greater than the check-in date"),
         STAY_TOO_LONG("The stay can't be longer than " + RESERVATION_MAXIMUM_STAY.get(ChronoUnit.DAYS) + " days"),
         ALREADY_SELECTED_DATES_BY_OTHER_USERS("The chosen dates have already been selected"),
-        EXTENDING_EXISTING_RESERVATION("By creating this new reservation, you are extending an already created reservation. Please modify it if you want to extend it, but keep in mind it can't be longer than " + RESERVATION_MAXIMUM_STAY.get(ChronoUnit.DAYS) + " days");
+        CREATING_RESERVATION_EXTENDS_PREVIOUS_ONE("By creating this new reservation, you are extending (a) previously created reservation(s) (%s). Please modify it if you want to extend your stay, but keep in mind it can't be longer than " + RESERVATION_MAXIMUM_STAY.get(ChronoUnit.DAYS) + " days"),
+        MODIFYING_RESERVATION_MERGES_PREVIOUS_ONE("By modifying this reservation, you are merging a previously created reservation (from %s to %s) with this one.");
 
         private String message;
 
@@ -27,7 +28,7 @@ public class InvalidReservationDatesException extends ApiException {
         }
     }
 
-    public InvalidReservationDatesException(InvalidReservationDatesType type) {
-        super("006", HttpStatusCode.BAD_REQUEST, "Reservation's selected dates are invalid. " + type.getMessage());
+    public InvalidReservationDatesException(String message) {
+        super("006", HttpStatusCode.BAD_REQUEST, "Reservation's selected dates are invalid. " + message);
     }
 }

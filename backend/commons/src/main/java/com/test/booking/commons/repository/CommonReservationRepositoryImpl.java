@@ -39,7 +39,6 @@ public class CommonReservationRepositoryImpl implements CommonReservationReposit
                         Reservation.builder()
                                 .checkInDate(checkInDate)
                                 .checkOutDate(checkOutDate)
-                                //.stay(checkInDate.datesUntil(checkOutDate.plus(Period.ofDays(1))).collect(Collectors.toList()))
                                 .status(ReservationStatus.VALID)
                                 .build()
                 );

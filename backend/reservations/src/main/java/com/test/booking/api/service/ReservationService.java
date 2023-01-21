@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.test.booking.commons.Constants.RESERVATION_MAXIMUM_STAY;
 
@@ -29,6 +31,7 @@ public class ReservationService {
         validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
         validateReservationCheckInAndCheckOutDates(reservationDto);
         validateReservationDatesUnavailable(connection, reservationDto);
+        validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
         reservation = RepositoryFactory.getReservationRepository().createReservation(connection, reservation);
@@ -37,10 +40,10 @@ public class ReservationService {
     }
 
     public static Reservation modifyReservation(Connection connection, UUID reservationId, UUID guestId, ReservationDto reservationDto) {
-
         validateReservationExistsAndBelongsToUser(connection, reservationId, guestId);
         validateReservationCheckInAndCheckOutDates(reservationDto);
         validateReservationDatesUnavailable(connection, reservationDto);
+        validateUserIsNotMergingStaysByModifyingAPreviousOne(connection, reservationId, reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
         reservation.setReservationId(reservationId);
@@ -63,20 +66,54 @@ public class ReservationService {
      * VALIDATION METHODS
      */
     protected static void validateUserIsNotExtendingStayByCreatingANewOne(Connection connection, ReservationDto reservationDto) {
-        //TODO: Implement method
-        // It should throw InvalidReservationDatesException.InvalidReservationDatesType.EXTENDING_EXISTING_RESERVATION
-        // in case user is trying to extend its stay by creating a new one
+        List<Reservation> reservations = RepositoryFactory.getReservationRepository().getValidReservationsByUserAndCheckInOrCheckOutDate(
+                connection,
+                UUID.fromString(reservationDto.getGuestId()),
+                reservationDto.getCheckInDate().plus(Period.ofDays(1)),
+                reservationDto.getCheckOutDate().minus(Period.ofDays(1))
+        );
+
+        if(reservations.size() > 0) {
+            String message = reservations.stream().map(r -> "from " + r.getCheckInDate() + " to " + r.getCheckOutDate()).collect(Collectors.joining(", "));
+            throw new InvalidReservationDatesException(String.format(
+                    InvalidReservationDatesException.InvalidReservationDatesType.CREATING_RESERVATION_EXTENDS_PREVIOUS_ONE.getMessage(), message
+            ));
+        }
+    }
+
+    protected static void validateUserIsNotMergingStaysByModifyingAPreviousOne(Connection connection, UUID reservationId, ReservationDto reservationDto) {
+        List<Reservation> reservations = RepositoryFactory.getReservationRepository().getValidReservationsByUserAndCheckInOrCheckOutDate(
+                connection,
+                UUID.fromString(reservationDto.getGuestId()),
+                reservationDto.getCheckInDate().plus(Period.ofDays(1)),
+                reservationDto.getCheckOutDate().minus(Period.ofDays(1))
+        );
+        reservations.removeIf(reservation -> reservation.getReservationId().equals(reservationId));
+
+        if(reservations.size() > 0) {
+            throw new InvalidReservationDatesException(String.format(
+                    InvalidReservationDatesException.InvalidReservationDatesType.MODIFYING_RESERVATION_MERGES_PREVIOUS_ONE.getMessage(),
+                    reservations.get(0).getCheckInDate(),
+                    reservations.get(0).getCheckOutDate()
+            ));
+        }
     }
     
     protected static void validateReservationCheckInAndCheckOutDates(ReservationDto reservationDto) {
         if(!reservationDto.getCheckInDate().isAfter(LocalDate.now()))
-            throw new InvalidReservationDatesException(InvalidReservationDatesException.InvalidReservationDatesType.PAST_CHECK_IN);
+            throw new InvalidReservationDatesException(
+                    InvalidReservationDatesException.InvalidReservationDatesType.PAST_CHECK_IN.getMessage()
+            );
 
         if(reservationDto.getCheckInDate().isAfter(reservationDto.getCheckOutDate()))
-            throw new InvalidReservationDatesException(InvalidReservationDatesException.InvalidReservationDatesType.CHECK_IN_GREATER_THAN_CHECK_OUT);
+            throw new InvalidReservationDatesException(
+                    InvalidReservationDatesException.InvalidReservationDatesType.CHECK_IN_GREATER_THAN_CHECK_OUT.getMessage()
+            );
 
         if(reservationDto.getCheckInDate().plus(RESERVATION_MAXIMUM_STAY).isAfter(reservationDto.getCheckOutDate()))
-            throw new InvalidReservationDatesException(InvalidReservationDatesException.InvalidReservationDatesType.STAY_TOO_LONG);
+            throw new InvalidReservationDatesException(
+                    InvalidReservationDatesException.InvalidReservationDatesType.STAY_TOO_LONG.getMessage()
+            );
     }
 
     protected static void validateReservationExistsAndBelongsToUser(Connection connection, UUID reservationId, UUID guestId) {
@@ -88,6 +125,8 @@ public class ReservationService {
     protected static void validateReservationDatesUnavailable(Connection connection, ReservationDto reservationDto) {
         List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(reservationDto.getRoomId()));
         if (!availableDates.containsAll(reservationDto.getStay()))
-            throw new InvalidReservationDatesException(InvalidReservationDatesException.InvalidReservationDatesType.ALREADY_SELECTED_DATES_BY_OTHER_USERS);
+            throw new InvalidReservationDatesException(
+                    InvalidReservationDatesException.InvalidReservationDatesType.ALREADY_SELECTED_DATES_BY_OTHER_USERS.getMessage()
+            );
     }
 }
