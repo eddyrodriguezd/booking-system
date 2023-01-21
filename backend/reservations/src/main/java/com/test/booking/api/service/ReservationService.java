@@ -28,7 +28,6 @@ public class ReservationService {
     }
 
     public static Reservation placeReservation(Connection connection, ReservationDto reservationDto) {
-        validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
         validateReservationCheckInAndCheckOutDates(reservationDto);
         validateReservationDatesUnavailable(connection, reservationDto);
         validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
@@ -66,6 +65,7 @@ public class ReservationService {
      * VALIDATION METHODS
      */
     protected static void validateUserIsNotExtendingStayByCreatingANewOne(Connection connection, ReservationDto reservationDto) {
+        log.info("Validating if the creation of this reservation doesn't extend a previous one...");
         List<Reservation> reservations = RepositoryFactory.getReservationRepository().getValidReservationsByUserAndCheckInOrCheckOutDate(
                 connection,
                 UUID.fromString(reservationDto.getGuestId()),
@@ -82,6 +82,7 @@ public class ReservationService {
     }
 
     protected static void validateUserIsNotMergingStaysByModifyingAPreviousOne(Connection connection, UUID reservationId, ReservationDto reservationDto) {
+        log.info("Validating if the modification of reservation <{}> doesn't merge with a previous reservation...", reservationId);
         List<Reservation> reservations = RepositoryFactory.getReservationRepository().getValidReservationsByUserAndCheckInOrCheckOutDate(
                 connection,
                 UUID.fromString(reservationDto.getGuestId()),
@@ -100,6 +101,7 @@ public class ReservationService {
     }
     
     protected static void validateReservationCheckInAndCheckOutDates(ReservationDto reservationDto) {
+        log.info("Validating check-in <{}> and check-out <{}> dates...", reservationDto.getCheckInDate(), reservationDto.getCheckOutDate());
         if(!reservationDto.getCheckInDate().isAfter(LocalDate.now()))
             throw new InvalidReservationDatesException(
                     InvalidReservationDatesException.InvalidReservationDatesType.PAST_CHECK_IN.getMessage()
@@ -117,12 +119,14 @@ public class ReservationService {
     }
 
     protected static void validateReservationExistsAndBelongsToUser(Connection connection, UUID reservationId, UUID guestId) {
+        log.info("Validating reservation <{}> exists and belongs to user <{}>...", reservationId, guestId);
         Reservation reservation = RepositoryFactory.getReservationRepository().getReservationById(connection, reservationId);
         if (reservation == null || !reservation.getGuestId().equals(guestId))
             throw new ReservationNotFoundException(reservationId.toString());
     }
 
     protected static void validateReservationDatesUnavailable(Connection connection, ReservationDto reservationDto) {
+        log.info("Validating stay <[{}, {}]> is available for room <{}>...", reservationDto.getCheckInDate(), reservationDto.getCheckOutDate(), reservationDto.getRoomId());
         List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(reservationDto.getRoomId()));
         if (!availableDates.containsAll(reservationDto.getStay()))
             throw new InvalidReservationDatesException(
