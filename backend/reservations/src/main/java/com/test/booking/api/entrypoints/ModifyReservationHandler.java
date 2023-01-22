@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.test.booking.api.dto.ReservationDto;
+import com.test.booking.api.repository.ReservationRepository;
+import com.test.booking.api.repository.ReservationRepositoryImpl;
 import com.test.booking.api.service.ReservationService;
 import com.test.booking.commons.config.db.DBConnectionService;
 import com.test.booking.commons.config.mapper.MapperConfig;
@@ -21,6 +23,8 @@ import java.util.UUID;
 public class ModifyReservationHandler implements RequestHandler<Map<String, Object>, APIGatewayV2HTTPResponse> {
 
     private static final Connection connection = DBConnectionService.getDBConnection();
+    private static final ReservationRepository reservationRepository = new ReservationRepositoryImpl();
+    private static final ReservationService reservationService = new ReservationService(connection, reservationRepository);
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(Map<String, Object> event, Context context) {
@@ -39,7 +43,7 @@ public class ModifyReservationHandler implements RequestHandler<Map<String, Obje
             ReservationDto reservationDto = new ReservationDto(body);
             log.info("Reservation received from API Gateway: <{}>", reservationDto);
 
-            Reservation reservationUpdated = ReservationService.modifyReservation(connection, UUID.fromString(reservationId), UUID.fromString(identity.getUserId()), reservationDto);
+            Reservation reservationUpdated = reservationService.modifyReservation(UUID.fromString(reservationId), UUID.fromString(identity.getUserId()), reservationDto);
 
             return APIGatewayV2HTTPResponse.builder().withStatusCode(200).withBody(reservationUpdated.toString()).build();
         }

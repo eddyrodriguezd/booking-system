@@ -1,6 +1,7 @@
 package com.test.booking.api.service;
 
 import com.test.booking.api.dto.ReservationDto;
+import com.test.booking.api.repository.ReservationRepository;
 import com.test.booking.api.repository.factory.RepositoryFactory;
 import com.test.booking.commons.model.Reservation;
 import com.test.booking.commons.model.enums.ReservationStatus;
@@ -8,63 +9,68 @@ import com.test.booking.commons.util.Message;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-
-import static com.test.booking.api.service.ReservationValidationService.validateReservationCheckInAndCheckOutDates;
-import static com.test.booking.api.service.ReservationValidationService.validateReservationDatesAvailability;
-import static com.test.booking.api.service.ReservationValidationService.validateReservationExistsAndBelongsToUser;
-import static com.test.booking.api.service.ReservationValidationService.validateUserIsNotExtendingStayByCreatingANewOne;
-import static com.test.booking.api.service.ReservationValidationService.validateUserIsNotMergingStaysByModifyingAPreviousOne;
 
 @Slf4j
 public class ReservationService {
 
-    public static List<Reservation> getReservations(Connection connection, UUID guestId) {
-        List<Reservation> reservations = RepositoryFactory.getReservationRepository().getReservationsByUser(connection, guestId);
+    private final Connection connection;
+    private final ReservationValidationService reservationValidationService;
+    private final ReservationRepository reservationRepository;
+
+    public ReservationService(Connection connection, ReservationRepository reservationRepository) {
+        this.connection = connection;
+        this.reservationValidationService = new ReservationValidationService(connection, reservationRepository);
+        this.reservationRepository = reservationRepository;
+    }
+
+    public List<Reservation> getReservations(UUID guestId) {
+        List<Reservation> reservations = reservationRepository.getReservationsByUser(connection, guestId);
         log.info("Reservations retrieved for guest=<{}>: <{}>", guestId, reservations);
         return reservations;
     }
 
-    public static Reservation placeReservation(Connection connection, ReservationDto reservationDto) {
-        validateReservationCheckInAndCheckOutDates(reservationDto);
-        validateReservationDatesAvailability(connection, reservationDto, false);
-        validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
+    public Reservation placeReservation(ReservationDto reservationDto) {
+        reservationValidationService.validateReservationCheckInAndCheckOutDates(reservationDto);
+        reservationValidationService.validateReservationDatesAvailability(reservationDto, null);
+        reservationValidationService.validateUserIsNotExtendingStayByCreatingANewOne(reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
-        reservation = RepositoryFactory.getReservationRepository().createReservation(connection, reservation);
+        reservation = reservationRepository.createReservation(connection, reservation);
         log.info("Reservation <{}> was successfully created", reservation);
         return reservation;
     }
 
-    public static Reservation modifyReservation(Connection connection, UUID reservationId, UUID guestId, ReservationDto reservationDto) {
-        validateReservationExistsAndBelongsToUser(connection, reservationId, guestId);
-        validateReservationCheckInAndCheckOutDates(reservationDto);
+    public Reservation modifyReservation(UUID reservationId, UUID guestId, ReservationDto reservationDto) {
+        reservationValidationService.validateReservationExistsAndBelongsToUser(reservationId, guestId);
+        reservationValidationService.validateReservationCheckInAndCheckOutDates(reservationDto);
 
-        Reservation existingReservation = RepositoryFactory.getReservationRepository().getReservationById(connection, reservationId);
+        Reservation existingReservation = reservationRepository.getReservationById(connection, reservationId);
         reservationDto.setRoomId(existingReservation.getRoomId().toString());
-        validateReservationDatesAvailability(connection, reservationDto, true);
+        reservationValidationService.validateReservationDatesAvailability(reservationDto, existingReservation.getStay());
 
         reservationDto.setGuestId(guestId.toString());
-        validateUserIsNotMergingStaysByModifyingAPreviousOne(connection, reservationId, reservationDto);
+        reservationValidationService.validateUserIsNotMergingStaysByModifyingAPreviousOne(reservationId, reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
         reservation.setReservationId(reservationId);
-        Reservation newReservation = RepositoryFactory.getReservationRepository().modifyReservation(connection, reservation);
+        Reservation newReservation = reservationRepository.modifyReservation(connection, reservation);
         reservation.setReservationId(reservationId);
         log.info("Reservation was successfully updated from <{}> to <{}>", reservation, newReservation);
 
         return reservation;
     }
 
-    public static Message cancelReservation(Connection connection, UUID reservationId, UUID guestId) {
-        validateReservationExistsAndBelongsToUser(connection, reservationId, guestId);
+    public Message cancelReservation(UUID reservationId, UUID guestId) {
+        reservationValidationService.validateReservationExistsAndBelongsToUser(reservationId, guestId);
 
-        Reservation existingReservation = RepositoryFactory.getReservationRepository().getReservationById(connection, reservationId);
+        Reservation existingReservation = reservationRepository.getReservationById(connection, reservationId);
         if(existingReservation.getStatus().equals(ReservationStatus.CANCELED))
             return Message.builder().message("Reservation with id=<" + reservationId + "> was already canceled").build();
 
-        RepositoryFactory.getReservationRepository().cancelReservation(connection, reservationId);
+        reservationRepository.cancelReservation(connection, reservationId);
         log.info("Reservation with id=<{}> was successfully canceled", reservationId);
         return Message.builder().message("Reservation with id=<" + reservationId + "> has been canceled").build();
     }

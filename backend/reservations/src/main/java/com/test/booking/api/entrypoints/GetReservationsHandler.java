@@ -3,6 +3,8 @@ package com.test.booking.api.entrypoints;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
+import com.test.booking.api.repository.ReservationRepository;
+import com.test.booking.api.repository.ReservationRepositoryImpl;
 import com.test.booking.api.service.ReservationAdminService;
 import com.test.booking.api.service.ReservationService;
 import com.test.booking.commons.config.db.DBConnectionService;
@@ -22,6 +24,9 @@ import java.util.UUID;
 public class GetReservationsHandler implements RequestHandler<Map<String, Object>, APIGatewayV2HTTPResponse> {
 
     private static final Connection connection = DBConnectionService.getDBConnection();
+    private static final ReservationRepository reservationRepository = new ReservationRepositoryImpl();
+    private static final ReservationAdminService reservationAdminService = new ReservationAdminService(connection, reservationRepository);
+    private static final ReservationService reservationService = new ReservationService(connection, reservationRepository);
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(Map<String, Object> event, Context context) {
@@ -33,11 +38,11 @@ public class GetReservationsHandler implements RequestHandler<Map<String, Object
             List<Reservation> reservations = null;
             switch (IdentityService.IDENTITY_TYPE) {
                 case ADMIN:
-                    reservations = ReservationAdminService.getReservations(connection);
+                    reservations = reservationAdminService.getReservations();
                     break;
                 case USER:
                     String guestId = identity.getUserId();
-                    reservations = ReservationService.getReservations(connection, UUID.fromString(guestId));
+                    reservations = reservationService.getReservations(UUID.fromString(guestId));
             }
 
             return APIGatewayV2HTTPResponse.builder()
