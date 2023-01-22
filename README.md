@@ -69,3 +69,23 @@ Important considerations:
 * "Get Hotels" and "Get Room's Availability" functions do not require user login, i.e. API Gateway does not validate the JWT against Cognito. Clients should be able to know a room's availability without having to create an account to place a reservation.
 
 * The administrator workflow is similar to the client user's one. The only difference is that it validates the JWT against a different User Pool from Cognito (which only has credentials from the hotel administrators).
+
+* All information is retrieved from / saved to a Master database. This database is replicated synchronously with a Standby database. In the event of an availability problem with the first availability zone, connections are pointed to the Standby database.
+
+* Lambda functions scale on demand, so multiple simultaneous requests can be served without the need for any special scalability configuration.
+
+## Development
+Two microservices (Hotels and Reservations) were developed to ensure the creation of the handlers to support the seven endpoints described in the architecture. In order to avoid code duplication, a "commons" package was generated and used as a dependency for both microservices.
+
+
+| Microservice      | Handler                     | Method + Endpoint                         | Description                           |
+| :-----       | :---                        | :---                                      | :--- 
+| hotels	   | GetHotelsHandler	         | GET /hotels                               | Retrieves all hotels with rooms information
+| hotels	   | GetHotelAvailabilityHandler | GET /hotels/{room_id}/availability        | Retrieves the availability for a specific room
+| reservations | GetReservationsHandler	     | GET /reservations                         | Retrieves the reservations created (for a user or for all users if triggered by an admin)
+| reservations | PlaceReservationHandler	 | POST /reservations                        | Creates a new reservation
+| reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}        | Updates the check-in and/or check-out dates for an existing reservations
+| reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel | Cancel a valid reservation
+
+The "ReservationValidationService" class (belonging to the "Reservations" microservice) was identified as the service with the highest probability of logic errors, so unit tests of all the methods of this class were performed.
+![Unit Tests](./img/unit-tests.PNG)
