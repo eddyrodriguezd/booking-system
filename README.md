@@ -87,5 +87,18 @@ Two microservices (Hotels and Reservations) were developed to ensure the creatio
 | reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}        | Updates the check-in and/or check-out dates for an existing reservations
 | reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel | Cancel a valid reservation
 
+### Unit Tests
 The "ReservationValidationService" class (belonging to the "Reservations" microservice) was identified as the service with the highest probability of logic errors, so unit tests of all the methods of this class were performed.
 ![Unit Tests](./img/unit-tests.PNG)
+
+### Build
+The "GraalVM Native Image" build technology was used to generate a native executable. The goal is to deal with the cold start problem that Lambda functions have when using compiled languages like Java.
+
+The results were extremely good, obtaining less than 2 seconds of cold start in all the scenarios.
+
+A very important point to take into account when compiling with GraalVM Native Image is that the resulting binary file is platform dependent (Linux, Windows, MacOS). And since the Lambda functions run with a custom Amazon Linux 2 runtime, the compilation and build of the executable must be done on a Linux machine.
+
+A way of achieving this is by running a container from any Linux distribution, including Amazon Linux 2 itself, e.g. **docker run --rm -it -v %cd%:/usr/booking-system amazonlinux:2**.
+
+The result of this "ahead-of-time" compilation is a zip file with executables to run in the AWS Lambda container. The **boostrap** file is mandatory because the Amazon Linux 2 container looks for this file when bootstrapping a Lambda container.
+![Executable](./img/executable.PNG)
