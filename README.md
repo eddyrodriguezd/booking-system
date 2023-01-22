@@ -47,3 +47,25 @@ Data was organized in three tables: hotels, rooms and reservations, which are de
 
 The relationship between these tables can be seen in the following Entity-Relationship diagram:
 ![Database ER Diagram](./img/db_er_diagram.png)
+
+## Architecture
+
+The architectured solution consists of a collection of serverless functions (AWS Lambda) with native authentication handling (Amazon Cognito), native API handling (Amazon API Gateway) and a relational database (Amazon RDS) with credentials stored in a secured way (AWS Secrets Manager). Deployment must be done in **multiple availability zones** to ensure **high availability**.
+
+![Architecture](./img/architecture.png)
+
+| Id    | Description
+| :---:  | :---
+| 1     | User sends his/her credentials to Cognito (using Hosted UI) to retrieve a JWT
+| 2     | The credentials are sent together with the request to API Gateway
+| 3     | API Gateway validates the credentials against Cognito and if valid, authorizes the request 
+| 4     | API Gateway sends the payload to Lambda function including the user identifier from Cognito
+| 5     | Lambda function retrieves the database credentials from Secrets Manager
+| 6     | Lambda function connects to database using the retrieved credentials and performs the operation requested
+
+Important considerations:
+* Lambda functions and Database are deployed in private subnets from a VPC. Therefore, to have access to an external service such as Secrets Manager, a VPC endpoint per availability zone must be added.
+
+* "Get Hotels" and "Get Room's Availability" functions do not require user login, i.e. API Gateway does not validate the JWT against Cognito. Clients should be able to know a room's availability without having to create an account to place a reservation.
+
+* The administrator workflow is similar to the client user's one. The only difference is that it validates the JWT against a different User Pool from Cognito (which only has credentials from the hotel administrators).
