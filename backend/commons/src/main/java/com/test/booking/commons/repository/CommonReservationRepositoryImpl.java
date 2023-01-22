@@ -49,7 +49,7 @@ public class CommonReservationRepositoryImpl implements CommonReservationReposit
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_RESERVATIONS_DATES_BY_ROOM_ID_QUERY);
+            throw new DatabaseAccessException();
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.test.booking.commons.dto;
+package com.test.booking.commons.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.test.booking.commons.config.mapper.MapperConfig;
@@ -17,10 +17,6 @@ public class Message {
 
     @Override
     public String toString() {
-        try {
-            return MapperConfig.getObjectMapper().writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new JsonParsingException(this.getClass().getName());
-        }
+        return "{\"message\":\"" + message + "\"}";
     }
 }

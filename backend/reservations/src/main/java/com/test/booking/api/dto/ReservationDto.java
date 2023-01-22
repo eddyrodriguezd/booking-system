@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,13 @@ public class ReservationDto {
         } catch (JsonProcessingException e) {
             throw new JsonParsingException(this.getClass().getName());
         }
+    }
+
+    public ReservationDto(Map<String, String> map) {
+        this.roomId = map.get("roomId");
+        this.guestId = map.get("guestId");
+        this.checkInDate = LocalDate.parse(map.get("checkInDate"));
+        this.checkOutDate = LocalDate.parse(map.get("checkOutDate"));
     }
 
     public Reservation toEntity() {

@@ -5,7 +5,7 @@ import software.amazon.awssdk.http.HttpStatusCode;
 
 public class DatabaseAccessException extends ApiException {
 
-    public DatabaseAccessException(String query) {
-        super("002", HttpStatusCode.INTERNAL_SERVER_ERROR, "SQL query <" + query + "> failed");
+    public DatabaseAccessException() {
+        super("002", HttpStatusCode.INTERNAL_SERVER_ERROR, "SQL query failed");
     }
 }

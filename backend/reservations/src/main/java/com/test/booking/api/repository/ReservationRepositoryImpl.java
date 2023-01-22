@@ -33,6 +33,8 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         try {
             log.info("Query that will be executed: <{}>", GET_RESERVATION_BY_ID);
             PreparedStatement preparedStatement = connection.prepareStatement(GET_RESERVATION_BY_ID);
+            PGobject reservationIdPgObject = DBUtil.buildPostgresUUIDObject(reservationId);
+            preparedStatement.setObject(1, reservationIdPgObject);
             ResultSet rs = preparedStatement.executeQuery();
 
             rs.next();
@@ -49,7 +51,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATION_BY_ID, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_RESERVATION_BY_ID);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -77,7 +79,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_ALL_RESERVATIONS, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_ALL_RESERVATIONS);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -108,7 +110,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_RESERVATIONS_BY_USER, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_RESERVATIONS_BY_USER);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -143,7 +145,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", GET_VALID_RESERVATIONS_BY_GUEST_ID, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(GET_VALID_RESERVATIONS_BY_GUEST_ID);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -166,13 +168,13 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
             if(result == 0) {
                 log.error("SQL query <{}> failed. It didn't create any record.", CREATE_RESERVATION);
-                throw new DatabaseAccessException(CREATE_RESERVATION);
+                throw new DatabaseAccessException();
             }
             return reservation;
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", CREATE_RESERVATION, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(CREATE_RESERVATION);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -191,13 +193,13 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
             if(result == 0) {
                 log.error("SQL query <{}> failed. It didn't update any record.", MODIFY_RESERVATION);
-                throw new DatabaseAccessException(MODIFY_RESERVATION);
+                throw new DatabaseAccessException();
             }
             return reservation;
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", MODIFY_RESERVATION, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(MODIFY_RESERVATION);
+            throw new DatabaseAccessException();
         }
     }
 
@@ -214,12 +216,12 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
             if(result == 0) {
                 log.error("SQL query <{}> failed. It didn't update any record.", CANCEL_RESERVATION);
-                throw new DatabaseAccessException(CANCEL_RESERVATION);
+                throw new DatabaseAccessException();
             }
         }
         catch (SQLException e) {
             log.error("SQL query <{}> failed. Error: <{}>. Stack Trace: <{}>.", CANCEL_RESERVATION, e.getMessage(), e.getStackTrace());
-            throw new DatabaseAccessException(CANCEL_RESERVATION);
+            throw new DatabaseAccessException();
         }
     }
 }

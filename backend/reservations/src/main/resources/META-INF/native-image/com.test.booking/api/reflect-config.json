@@ -9,6 +9,15 @@
     "allPublicClasses": true
   },
   {
+    "name": "org.joda.time.DateTime",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
     "name": "com.test.booking.api.entrypoints.GetReservationsHandler",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -63,7 +72,7 @@
     "allPublicClasses": true
   },
   {
-    "name": "com.test.booking.api.model.ReservationStatus",
+    "name": "com.test.booking.commons.model.enums.ReservationStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -72,7 +81,7 @@
     "allPublicClasses": true
   },
   {
-    "name": "com.test.booking.api.model.ReservationDto",
+    "name": "com.test.booking.api.dto.ReservationDto",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -82,6 +91,24 @@
   },
   {
     "name": "com.test.booking.commons.util.identity.IdentityType",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
+    "name": "com.test.booking.commons.util.identity.Identity",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
+  },
+  {
+    "name": "com.test.booking.commons.util.Message",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

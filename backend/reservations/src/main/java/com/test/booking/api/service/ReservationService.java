@@ -4,19 +4,21 @@ import com.test.booking.api.dto.ReservationDto;
 import com.test.booking.api.exception.InvalidReservationDatesException;
 import com.test.booking.api.exception.ReservationNotFoundException;
 import com.test.booking.api.repository.factory.RepositoryFactory;
-import com.test.booking.commons.dto.Message;
 import com.test.booking.commons.model.Reservation;
 import com.test.booking.commons.service.CommonReservationService;
+import com.test.booking.commons.util.Message;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.test.booking.commons.Constants.RESERVATION_MAXIMUM_STAY;
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 public class ReservationService {
@@ -29,7 +31,7 @@ public class ReservationService {
 
     public static Reservation placeReservation(Connection connection, ReservationDto reservationDto) {
         validateReservationCheckInAndCheckOutDates(reservationDto);
-        validateReservationDatesUnavailable(connection, reservationDto);
+        validateReservationDatesAvailability(connection, reservationDto);
         validateUserIsNotExtendingStayByCreatingANewOne(connection, reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
@@ -41,7 +43,11 @@ public class ReservationService {
     public static Reservation modifyReservation(Connection connection, UUID reservationId, UUID guestId, ReservationDto reservationDto) {
         validateReservationExistsAndBelongsToUser(connection, reservationId, guestId);
         validateReservationCheckInAndCheckOutDates(reservationDto);
-        validateReservationDatesUnavailable(connection, reservationDto);
+
+        Reservation existingReservation = RepositoryFactory.getReservationRepository().getReservationById(connection, reservationId);
+        reservationDto.setRoomId(existingReservation.getRoomId().toString());
+        validateReservationDatesAvailability(connection, reservationDto);
+
         validateUserIsNotMergingStaysByModifyingAPreviousOne(connection, reservationId, reservationDto);
 
         Reservation reservation = reservationDto.toEntity();
@@ -112,7 +118,7 @@ public class ReservationService {
                     InvalidReservationDatesException.InvalidReservationDatesType.CHECK_IN_GREATER_THAN_CHECK_OUT.getMessage()
             );
 
-        if(reservationDto.getCheckInDate().plus(RESERVATION_MAXIMUM_STAY).isAfter(reservationDto.getCheckOutDate()))
+        if(DAYS.between(reservationDto.getCheckInDate(), reservationDto.getCheckOutDate()) >= RESERVATION_MAXIMUM_STAY.get(ChronoUnit.DAYS))
             throw new InvalidReservationDatesException(
                     InvalidReservationDatesException.InvalidReservationDatesType.STAY_TOO_LONG.getMessage()
             );
@@ -125,7 +131,7 @@ public class ReservationService {
             throw new ReservationNotFoundException(reservationId.toString());
     }
 
-    protected static void validateReservationDatesUnavailable(Connection connection, ReservationDto reservationDto) {
+    protected static void validateReservationDatesAvailability(Connection connection, ReservationDto reservationDto) {
         log.info("Validating stay <[{}, {}]> is available for room <{}>...", reservationDto.getCheckInDate(), reservationDto.getCheckOutDate(), reservationDto.getRoomId());
         List<LocalDate> availableDates = CommonReservationService.getAvailabilityByRoomId(connection, UUID.fromString(reservationDto.getRoomId()));
         if (!availableDates.containsAll(reservationDto.getStay()))

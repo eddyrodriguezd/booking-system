@@ -45,7 +45,7 @@
     "allPublicClasses": true
   },
   {
-    "name": "com.test.booking.api.model.ReservationStatus",
+    "name": "com.test.booking.commons.model.enums.ReservationStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

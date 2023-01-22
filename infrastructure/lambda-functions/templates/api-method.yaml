@@ -22,10 +22,17 @@ Parameters:
     Type: String
   ApiHttpMethod:
     Type: String
+  ApiProxyIntegration:
+    Type: String
+  ApiCognitoAuthorizer:
+    Type: String
 
 Conditions:
   PathIsRoot: !Equals [!Ref ApiFullResourcePath, "/"]
   IsAPIPublic: !Equals [!Ref APIAccess, "public"]
+
+  IsProxyIntegration: !Equals [!Ref ApiProxyIntegration, "true"]
+  IsCognitoProtected: !Equals [!Ref ApiCognitoAuthorizer, "true"]
 
 Resources:
   #----------------------------------------------------
@@ -64,15 +71,23 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: !Ref ApiHttpMethod
-      AuthorizationScopes:
-        - email
-        - openid
-        - profile
-        - aws.cognito.signin.user.admin
-      AuthorizationType: COGNITO_USER_POOLS
-      AuthorizerId: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/cognito-authorizer/id}}"
+      AuthorizationScopes: !If
+        - IsCognitoProtected
+        - - email
+          - openid
+          - profile
+          - aws.cognito.signin.user.admin
+        - !Ref AWS::NoValue
+      AuthorizationType: !If
+        - IsCognitoProtected
+        - COGNITO_USER_POOLS
+        - NONE
+      AuthorizerId: !If
+        - IsCognitoProtected
+        - !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${APIAccess}/cognito-authorizer/id}}"
+        - !Ref AWS::NoValue
       Integration:
-        Type: AWS_PROXY
+        Type: !If [IsProxyIntegration, AWS_PROXY, AWS]
         IntegrationHttpMethod: POST
         ConnectionType: INTERNET
         Credentials: !GetAtt APIGWRole.Arn
@@ -81,8 +96,39 @@ Resources:
           - function_arn: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/${Module}/${LambdaName}/lambda/arn}}"
         RequestParameters:
           integration.request.header.Accept: "'application/json'"
+        RequestTemplates: !If
+          - IsProxyIntegration
+          - !Ref AWS::NoValue
+          - application/json: |
+              #set($allParams = $input.params())
+              {
+              "body" : $input.json('$'),
+              "params" : {
+              #foreach($type in $allParams.keySet())
+                  #set($params = $allParams.get($type))
+              "$type" : {
+                  #foreach($paramName in $params.keySet())
+                  "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+                      #if($foreach.hasNext),#end
+                  #end
+              }
+                  #if($foreach.hasNext),#end
+              #end
+              },
+              "context": {
+                  "userId": "$context.authorizer.claims.sub"
+                  }
+              }
         IntegrationResponses:
           - StatusCode: "200"
+            ResponseTemplates: !If
+              - IsProxyIntegration
+              - !Ref AWS::NoValue
+              - application/json: |
+                  #set($body = $input.path('$.body'))
+                  #set($statusCode = $input.path('$.statusCode'))
+                  #set($context.responseOverride.status = $statusCode)
+                  $body
           - SelectionPattern: "HTTP 400.*"
             StatusCode: "400"
           - SelectionPattern: "HTTP 404.*"

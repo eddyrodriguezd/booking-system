@@ -33,6 +33,7 @@ Stages:
         # API Gateway
         ApiFullResourcePath: "/hotels"
         ApiHttpMethod: "GET"
+        ApiCognitoAuthorizer: false
 
     lambda-get-hotel-room-availability:
       Extends: lambda-service
@@ -45,6 +46,7 @@ Stages:
         # API Gateway
         ApiFullResourcePath: "/hotels/rooms/room_id/availability"
         ApiHttpMethod: "GET"
+        ApiCognitoAuthorizer: false
 
     lambda-get-user-reservations:
       Extends: lambda-service
@@ -57,6 +59,7 @@ Stages:
         # API Gateway
         ApiFullResourcePath: "/reservations"
         ApiHttpMethod: "GET"
+        ApiProxyIntegration: false
 
     lambda-place-reservation:
       Extends: lambda-service
@@ -69,6 +72,7 @@ Stages:
         # API Gateway
         ApiFullResourcePath: "/reservations"
         ApiHttpMethod: "POST"
+        ApiProxyIntegration: false
 
     lambda-modify-reservation:
       Extends: lambda-service
@@ -79,8 +83,9 @@ Stages:
         LambdaHandler: "com.test.booking.api.entrypoints.ModifyReservationHandler::handleRequest"
         LambdaZipS3Key: reservations.zip
         # API Gateway
-        ApiFullResourcePath: "/reservations"
+        ApiFullResourcePath: "/reservations/reservation_id"
         ApiHttpMethod: "PUT"
+        ApiProxyIntegration: false
 
     lambda-cancel-reservation:
       Extends: lambda-service
@@ -93,6 +98,7 @@ Stages:
         # API Gateway
         ApiFullResourcePath: "/reservations/reservation_id/cancel"
         ApiHttpMethod: "PUT"
+        ApiProxyIntegration: false
 
     #--------------------------------------------------------------
     #---------------------- ADMIN RESOURCES ----------------------
@@ -110,3 +116,4 @@ Stages:
         APIAccess: private
         ApiFullResourcePath: "/reservations"
         ApiHttpMethod: "GET"
+        ApiProxyIntegration: false

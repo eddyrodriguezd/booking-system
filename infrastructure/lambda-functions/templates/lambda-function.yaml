@@ -28,6 +28,12 @@ Parameters:
     Description: "Lambda Function Timeout"
     Type: Number
 
+  APIAccess:
+    Type: String
+
+Conditions:
+  IsForAdmin: !Equals [!Ref APIAccess, "private"]
+
 Resources:
   LambdaMicroserviceFunction:
     Type: AWS::Lambda::Function
@@ -45,8 +51,7 @@ Resources:
       Environment:
         Variables:
           RDS_SECRET_ARN: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/db/secret/arn}}"
-          ADMIN_IDENTITY_POOL_ID: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/auth/private/identity-pool/id}}"
-          USER_IDENTITY_POOL_ID: !Sub "{{resolve:ssm:/cf/${Environment}/${Application}/auth/public/identity-pool/id}}"
+          IDENTITY_TYPE: !If [IsForAdmin, "ADMIN", "USER"]
           LOG_LEVEL: INFO
       VpcConfig:
         SecurityGroupIds:

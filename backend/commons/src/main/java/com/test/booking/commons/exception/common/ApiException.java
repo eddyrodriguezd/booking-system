@@ -5,8 +5,7 @@ import com.test.booking.commons.config.mapper.MapperConfig;
 import com.test.booking.commons.exception.JsonParsingException;
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -20,23 +19,16 @@ public class ApiException extends RuntimeException {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
     public static class ResponseBody {
         private String code;
         private String message;
 
-        @Builder
-        public ResponseBody(String code, String message) {
-            this.code = code;
-            this.message = message;
-        }
-
         @Override
         public String toString() {
-            try {
-                return MapperConfig.getObjectMapper().writeValueAsString(this);
-            } catch (JsonProcessingException e) {
-                throw new JsonParsingException(this.getClass().getName());
-            }
+           return "{\"code\":\"" + code + "\",\"message\":\"" + message + "\"}";
         }
     }
 }
