@@ -6,6 +6,6 @@ import software.amazon.awssdk.http.HttpStatusCode;
 public class ReservationNotFoundException extends ApiException {
 
     public ReservationNotFoundException(String reservationId) {
-        super("007", HttpStatusCode.BAD_REQUEST, "Reservation with id=<{}> could not been found");
+        super("005", HttpStatusCode.BAD_REQUEST, "Reservation with id=<{}> could not been found");
     }
 }

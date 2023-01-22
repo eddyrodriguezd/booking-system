@@ -210,7 +210,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             PreparedStatement preparedStatement = connection.prepareStatement(CANCEL_RESERVATION);
 
             PGobject reservationIdPgObject = DBUtil.buildPostgresUUIDObject(reservationId);
-            preparedStatement.setObject(3, reservationIdPgObject);
+            preparedStatement.setObject(1, reservationIdPgObject);
 
             int result = preparedStatement.executeUpdate();
 
