@@ -13,4 +13,37 @@ It has been developed in Java and deployed in AWS Lambda using a custom runtime 
 <img src="https://user-images.githubusercontent.com/25181517/183892181-ad32b69e-3603-418c-b8e7-99e976c2a784.png" width="70" height="70" /> &nbsp; &nbsp;
 <img src="https://user-images.githubusercontent.com/25181517/117208740-bfb78400-adf5-11eb-97bb-09072b6bedfc.png" width="70" height="70" />
 
+## Data model
+Data was organized in three tables: hotels, rooms and reservations, which are described below.
 
+#### Hotels
+| Column name  | Data type    | Description                                                  |
+| :-----       | :---         | :---                                                         |
+| id     	   | UUID         |	Unique identifier                                            |
+| name	       | VARCHAR(255) |	Hotel name                                                   |
+| country_code | VARCHAR(2)   |	Hotel country code (based on ISO 3166-1), e.g. PE, CA, etc.  |
+| city         | VARCHAR(60)  |	Hotel city                                                   |
+| latitude     | float8	      | Hotel location latitude                                      |
+| longitude    | float8	      | Hotel location longitude                                     |
+
+#### Rooms
+| Column name      | Data type   | Description                                                   |
+| :-----           | :---        | :---                                                          |
+| id     	       | UUID        |	Unique identifier                                            |
+| hotel_id         | UUID        |	Foreign key to hotel identifier                              |
+| type             | VARCHAR(50) |	Room type, e.g. Standard, Premium, etc.                      |
+| number_of_guests | smallint    |	Amount of people which can share the room                    |
+| price            | int4	     | Price                                                         |
+| currency_code    | VARCHAR(3)	 | Price's currency code (based on ISO 4217), e.g. PEN, CAD etc. |
+
+#### Reservations
+| Column name   | Data type | Description                           |
+| :-----        | :---      | :---                                  |
+| id	        | UUID	    | Unique identifier                     |
+| room_id	    | UUID	    | Foreign key to room identifier        |
+| checkin_date	| date	    | Date on which the accomodation begins |
+| checkout_date	| date	    | Date on which the accomodation ends   |
+| guest_id	    | UUID	    | Cognito's guest identifier            |
+
+The relationship between these tables can be seen in the following Entity-Relationship diagram:
+![Database ER Diagram](./img/db_er_diagram.png)
