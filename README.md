@@ -14,7 +14,7 @@ It has been developed in Java and deployed in AWS Lambda using a custom runtime 
 <img src="https://user-images.githubusercontent.com/25181517/117208740-bfb78400-adf5-11eb-97bb-09072b6bedfc.png" width="70" height="70" />
 
 ## Data model
-Data was organized in three tables: hotels, rooms and reservations, which are described below.
+Data was organized in **three tables: hotels, rooms and reservations**, which are described below.
 
 #### Hotels
 | Column name  | Data type    | Description                                                  |
@@ -77,28 +77,73 @@ Important considerations:
 ## Development
 Two microservices (Hotels and Reservations) were developed to ensure the creation of the handlers to support the seven endpoints described in the architecture. In order to avoid code duplication, a "commons" package was generated and used as a dependency for both microservices.
 
-
-| Microservice      | Handler                     | Method + Endpoint                         | Description                           |
-| :-----       | :---                        | :---                                      | :--- 
-| hotels	   | GetHotelsHandler	         | GET /hotels                               | Retrieves all hotels with rooms information
-| hotels	   | GetHotelAvailabilityHandler | GET /hotels/{room_id}/availability        | Retrieves the availability for a specific room
-| reservations | GetReservationsHandler	     | GET /reservations                         | Retrieves the reservations created (for a user or for all users if triggered by an admin)
-| reservations | PlaceReservationHandler	 | POST /reservations                        | Creates a new reservation
-| reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}        | Updates the check-in and/or check-out dates for an existing reservations
-| reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel | Cancel a valid reservation
+| Microservice | Handler                     | Method + Endpoint                             | Description                           |
+| :-----       | :---                        | :---                                          | :--- 
+| hotels	   | GetHotelsHandler	         | GET /hotels                                   | Retrieves all hotels with rooms information
+| hotels	   | GetHotelAvailabilityHandler | GET /hotels/{room_id}/availability            | Retrieves the availability for a specific room
+| reservations | GetReservationsHandler	     | GET /reservations _(For both user and admin)_ | Retrieves the reservations created (for a user or for all users if triggered by an admin)
+| reservations | PlaceReservationHandler	 | POST /reservations                            | Creates a new reservation
+| reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}            | Updates the check-in and/or check-out dates for an existing reservations
+| reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel     | Cancel a valid reservation
 
 ### Unit Tests
-The "ReservationValidationService" class (belonging to the "Reservations" microservice) was identified as the service with the highest probability of logic errors, so unit tests of all the methods of this class were performed.
+The **ReservationValidationService** class (belonging to the _Reservations_ microservice) was identified as the service with the **more business logic content**, so unit tests of all the methods (and all lines) of this class were performed.
 ![Unit Tests](./img/unit-tests.PNG)
 
 ### Build
-The "GraalVM Native Image" build technology was used to generate a native executable. The goal is to deal with the cold start problem that Lambda functions have when using compiled languages like Java.
+The **GraalVM Native Image** build technology was used to generate a **native executable**. The main goal of choosing this technology was to deal with the cold start problem that Lambda functions have when using compiled languages like Java.
 
-The results were extremely good, obtaining less than 2 seconds of cold start in all the scenarios.
+The results were extremely good, obtaining **less than 2 seconds of cold start** in all the scenarios.
 
 A very important point to take into account when compiling with GraalVM Native Image is that the resulting binary file is platform dependent (Linux, Windows, MacOS). And since the Lambda functions run with a custom Amazon Linux 2 runtime, the compilation and build of the executable must be done on a Linux machine.
 
 A way of achieving this is by running a container from any Linux distribution, including Amazon Linux 2 itself, e.g. **docker run --rm -it -v %cd%:/usr/booking-system amazonlinux:2**.
 
-The result of this "ahead-of-time" compilation is a zip file with executables to run in the AWS Lambda container. The **boostrap** file is mandatory because the Amazon Linux 2 container looks for this file when bootstrapping a Lambda container.
-![Executable](./img/executable.PNG)
+The result of this ahead-of-time compilation is a zip file with executables to run in the AWS Lambda container. The **boostrap** file is mandatory because the Amazon Linux 2 container looks for this file when bootstrapping a Lambda container.
+![Binary executable](./img/executable.PNG)
+
+## Infrastructure
+The deployment of all components was done using CloudFormation templates and _cfn-cli_ tool (https://github.com/Kotaimen/awscfncli)
+
+The components were divided into different folders as described below.
+
+| Folder           | AWS Service(s)       |  Description                                                           |
+| :-----           | :---                 | :---                                                                   |
+| api-gateway	   | API Gateway	      | Creates the public and private (admin) API with its resources          |
+| cognito	       | Cognito              | Creates the public and private user pools to issue access credentials  |
+| database         | RDS, Secrets Manager | Creates the database and a secret holding its credentials              |
+| lambda-functions | Lambda, API Gateway  | Creates the Lambda functions with its role and API method              |
+| network          | EC2	              | Creates the VPC, Subnets, Security Groups and VPC Endpoints            |
+
+For economic reasons, the solution was deployed in a single availability zone. However, to turn it into a high availability architecture (as the architecture diagram), only a few changes must be made:
+* In the **VPC** template, the **EndpointSecretsManagerPrivateSubnetB** resource must be uncommented
+* In the **Lambda-Function** template, the **VpcConfig** of the **LambdaMicroserviceFunction** resource must uncomment the **SubnetB** from the **SubnetIds** attribute. 
+* In the **Database** template, the parameter **DBMultiAZ** must be as true.
+
+## Instructions for testing the live version
+A version of this API is currently running on AWS in a single AZ mode (as described in the infrastructure section).
+
+To test it, please download the Postman's collection and environment located in the **postman** folder and import it to your local Postman app.
+
+![Postman import](./img/postman_import.PNG)
+
+After importing the collection, you should be ready to test any of the seven endpoints.
+
+![Postman collection](./img/postman_collection.PNG)
+
+Just make sure:
+1. You are pointing to the correct environment (Upper right section)
+2. You have logged in as a user / or admin (only for the reservations endpoints)
+
+To log in, just open the "User" or "Admin" folder and click on the **Get New Access Token** button. It will open the Cognito Hosted UI.
+
+![Postman OAuth 2.0](./img/postman_oauth2.PNG)
+
+![Postman Sign-In](./img/postman_sign_in.PNG)
+
+Please use the following credentials to sign-in:
+
+| Type  | Email           |  Password     |
+| :---- | :---            | :---          |
+| User	| mock@client.com | j2zWD&*55jv3  |
+| Admin	| admin@hotel.com | 4Hkv#s4g583h  |

@@ -1,0 +1,370 @@
+{
+	"info": {
+		"_postman_id": "ec4f5219-c110-4a59-a3a0-90399a5a62ab",
+		"name": "Booking",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14840399"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Hotels",
+					"item": [
+						{
+							"name": "Get Hotels",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/hotels",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"hotels"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Room's Availability",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/hotels/rooms/{{room_id}}/availability",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"hotels",
+										"rooms",
+										"{{room_id}}",
+										"availability"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Reservations",
+					"item": [
+						{
+							"name": "Get Reservations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/reservations",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"reservations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Place Reservation",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"roomId\": {{room_id}},\r\n    \"checkInDate\": \"2023-02-03\",\r\n    \"checkOutDate\": \"2023-02-04\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/reservations",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"reservations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Modify Reservation",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"checkInDate\": \"2023-02-17\",\r\n    \"checkOutDate\": \"2023-02-19\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/reservations/{{reservation_id}}",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"reservations",
+										"{{reservation_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Reservation",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{PUBLIC_API_URL}}/reservations/{{reservation_id}}/cancel",
+									"host": [
+										"{{PUBLIC_API_URL}}"
+									],
+									"path": [
+										"reservations",
+										"{{reservation_id}}",
+										"cancel"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "oauth2",
+				"oauth2": [
+					{
+						"key": "clientId",
+						"value": "{{PUBLIC_AUTH_CLIENT_ID}}",
+						"type": "string"
+					},
+					{
+						"key": "accessTokenUrl",
+						"value": "{{PUBLIC_AUTH_URL}}/oauth2/token",
+						"type": "string"
+					},
+					{
+						"key": "authUrl",
+						"value": "{{PUBLIC_AUTH_URL}}/login",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"value": "",
+						"type": "string"
+					},
+					{
+						"key": "redirect_uri",
+						"value": "{{AUTH_CALLBACK_URL}}",
+						"type": "string"
+					},
+					{
+						"key": "tokenName",
+						"value": "Token",
+						"type": "string"
+					},
+					{
+						"key": "challengeAlgorithm",
+						"value": "S256",
+						"type": "string"
+					},
+					{
+						"key": "scope",
+						"value": "aws.cognito.signin.user.admin openid email profile",
+						"type": "string"
+					},
+					{
+						"key": "grant_type",
+						"value": "authorization_code",
+						"type": "string"
+					},
+					{
+						"key": "addTokenTo",
+						"value": "header",
+						"type": "string"
+					},
+					{
+						"key": "client_authentication",
+						"value": "body",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Reservations",
+					"item": [
+						{
+							"name": "Get Reservations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ADMIN_API_URL}}/reservations",
+									"host": [
+										"{{ADMIN_API_URL}}"
+									],
+									"path": [
+										"reservations"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "oauth2",
+				"oauth2": [
+					{
+						"key": "state",
+						"value": "",
+						"type": "string"
+					},
+					{
+						"key": "scope",
+						"value": "aws.cognito.signin.user.admin openid email profile",
+						"type": "string"
+					},
+					{
+						"key": "clientId",
+						"value": "{{ADMIN_AUTH_CLIENT_ID}}",
+						"type": "string"
+					},
+					{
+						"key": "accessTokenUrl",
+						"value": "{{ADMIN_AUTH_URL}}/oauth2/token",
+						"type": "string"
+					},
+					{
+						"key": "authUrl",
+						"value": "{{ADMIN_AUTH_URL}}/login",
+						"type": "string"
+					},
+					{
+						"key": "redirect_uri",
+						"value": "{{AUTH_CALLBACK_URL}}",
+						"type": "string"
+					},
+					{
+						"key": "tokenName",
+						"value": "Token",
+						"type": "string"
+					},
+					{
+						"key": "challengeAlgorithm",
+						"value": "S256",
+						"type": "string"
+					},
+					{
+						"key": "grant_type",
+						"value": "authorization_code",
+						"type": "string"
+					},
+					{
+						"key": "addTokenTo",
+						"value": "header",
+						"type": "string"
+					},
+					{
+						"key": "client_authentication",
+						"value": "body",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "room_id",
+			"value": "e9c7e7ff-839f-4b72-9d1c-7c422cf484c5",
+			"type": "string"
+		},
+		{
+			"key": "reservation_id",
+			"value": "09f66d90-f1b1-4c32-9396-2b3ed3890384",
+			"type": "string"
+		}
+	]
+}
