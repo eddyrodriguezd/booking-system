@@ -24,7 +24,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     private static final String GET_ALL_RESERVATIONS = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations;";
     private static final String GET_RESERVATIONS_BY_USER = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE guest_id = ?;";
     private static final String GET_VALID_RESERVATIONS_BY_GUEST_ID = "SELECT id as reservation_id, room_id, check_in_date, check_out_date, guest_id, status FROM booking.reservations WHERE guest_id = ? AND status = 'VALID' AND (check_in_date = ? OR check_out_date = ?);";
-    private static final String CREATE_RESERVATION = "INSERT INTO booking.reservations (room_id, check_in_date, check_out_date, guest_id, status) VALUES (?, ?, ?, ?, ?);";
+    private static final String CREATE_RESERVATION = "INSERT INTO booking.reservations (id, room_id, check_in_date, check_out_date, guest_id, status) VALUES (?, ?, ?, ?, ?, ?);";
     private static final String MODIFY_RESERVATION = "UPDATE booking.reservations SET check_in_date = ?, check_out_date = ? where id = ?;";
     private static final String CANCEL_RESERVATION = "UPDATE booking.reservations SET status = 'CANCELED' where id = ?;";
 
@@ -156,13 +156,17 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             PreparedStatement preparedStatement = connection.prepareStatement(CREATE_RESERVATION);
 
             reservation.setStatus(ReservationStatus.VALID);
+            UUID reservationId = UUID.randomUUID();
+            PGobject reservationIdPgObject = DBUtil.buildPostgresUUIDObject(reservationId);
             PGobject roomIdPgObject = DBUtil.buildPostgresUUIDObject(reservation.getRoomId());
             PGobject guestIdPgObject = DBUtil.buildPostgresUUIDObject(reservation.getGuestId());
-            preparedStatement.setObject(1, roomIdPgObject);
-            preparedStatement.setObject(2, reservation.getCheckInDate());
-            preparedStatement.setObject(3, reservation.getCheckOutDate());
-            preparedStatement.setObject(4, guestIdPgObject);
-            preparedStatement.setString(5, reservation.getStatus().name());
+
+            preparedStatement.setObject(1, reservationIdPgObject);
+            preparedStatement.setObject(2, roomIdPgObject);
+            preparedStatement.setObject(3, reservation.getCheckInDate());
+            preparedStatement.setObject(4, reservation.getCheckOutDate());
+            preparedStatement.setObject(5, guestIdPgObject);
+            preparedStatement.setString(6, reservation.getStatus().name());
 
             int result = preparedStatement.executeUpdate();
 
@@ -170,6 +174,8 @@ public class ReservationRepositoryImpl implements ReservationRepository {
                 log.error("SQL query <{}> failed. It didn't create any record.", CREATE_RESERVATION);
                 throw new DatabaseAccessException();
             }
+
+            reservation.setReservationId(reservationId);
             return reservation;
         }
         catch (SQLException e) {

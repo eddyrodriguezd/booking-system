@@ -178,3 +178,11 @@ Please use the following credentials to sign-in:
 | :---- | :---            | :---          |
 | User	| mock@client.com | j2zWD&*55jv3  |
 | Admin	| admin@hotel.com | 4Hkv#s4g583h  |
+
+And start hitting the endpoints. Below are some request examples.
+
+* Getting your reservations' information (As a user, you can only see your own reservations):
+![Get Reservations as User](./img/get_reservations_user.PNG)
+
+* Getting all reservations' information (As an admin, you can see all reservations):
+![Get Reservations as Admin](./img/get_reservations_admin.PNG)
