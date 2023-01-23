@@ -77,14 +77,42 @@ Important considerations:
 ## Development
 Two microservices (Hotels and Reservations) were developed to ensure the creation of the handlers to support the seven endpoints described in the architecture. In order to avoid code duplication, a "commons" package was generated and used as a dependency for both microservices.
 
-| Microservice | Handler                     | Method + Endpoint                             | Description                           |
-| :-----       | :---                        | :---                                          | :--- 
-| hotels	   | GetHotelsHandler	         | GET /hotels                                   | Retrieves all hotels with rooms information
-| hotels	   | GetHotelAvailabilityHandler | GET /hotels/{room_id}/availability            | Retrieves the availability for a specific room
-| reservations | GetReservationsHandler	     | GET /reservations _(For both user and admin)_ | Retrieves the reservations created (for a user or for all users if triggered by an admin)
-| reservations | PlaceReservationHandler	 | POST /reservations                            | Creates a new reservation
-| reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}            | Updates the check-in and/or check-out dates for an existing reservations
-| reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel     | Cancel a valid reservation
+| Microservice | Handler                     | Method + Endpoint                             | Description                                                                               |
+| :-----       | :---                        | :---                                          | :---                                                                                      |
+| hotels	   | GetHotelsHandler	         | GET /hotels                                   | Retrieves all hotels with rooms information                                               |
+| hotels	   | GetHotelAvailabilityHandler | GET /hotels/{room_id}/availability            | Retrieves the availability for a specific room                                            |
+| reservations | GetReservationsHandler	     | GET /reservations _(For both user and admin)_ | Retrieves the reservations created (for a user or for all users if triggered by an admin) |
+| reservations | PlaceReservationHandler	 | POST /reservations                            | Creates a new reservation                                                                 |
+| reservations | ModifyReservationHandler	 | PUT /reservations/{reservation_id}            | Updates the check-in and/or check-out dates for an existing reservations                  |
+| reservations | CancelReservationHandler	 | PUT /reservations/{reservation_id}/cancel     | Cancel a valid reservation                                                                |
+
+### Exceptions Handling
+The developed solution has 11 types of exceptions in case the system isn't able to interact with the resources or if the user enters invalid values.
+
+| Code | Name (Type)                                                                  | Description                                                                                    |
+| :--- | :---                                                                         | :---                                                                                           |
+| 001  | DatabaseConnectionException                                                  | App wasn't able to connect to the database                                                     |               
+| 002  | DatabaseAccessException                                                      | SQL query didn't execute successfully                                                          | 
+| 003  | JsonParsingException	                                                      | A String JSON couldn't be parsed                                                               | 
+| 004  | UUIDParsingException	                                                      | A String object couldn't be converted to a UUID                                                |
+| 005  | ReservationNotFoundException	                                              | Reservation to be modified/cancelled doesn't exist or doesn't belong to user                   |
+| 006  | InvalidReservationDatesException (Past check-in)                             | Check-in must start at least the next day of booking                                           |
+| 007  | InvalidReservationDatesException (Check-in greater than Check-out)           | Check-out must be equal or later than Check-in                                                 |
+| 008  | InvalidReservationDatesException (Stay too long)                             | Maximum stay is 3 days                                                                         |
+| 009  | InvalidReservationDatesException (Unavailable dates)                         | Selected dates are unavailable (already chosen by other guests or later than 30 days from now) |
+| 010  | InvalidReservationDatesException (Creating reservation extends previous one) | By creating this new reservation, you are extending a previously created reservation           |
+| 011  | InvalidReservationDatesException (Modifying reservation merges previous one) | By modifying this reservation, you are merging a previously created reservation with this one  |
+
+These exception are returned to user when trying to call the API. Some examples will be presented below.
+
+* If a user tries to create a reservation for today's date:
+![Exception 006](./img/exception_006.PNG)
+
+* If a user tries to stay more than 3 days:
+![Exception 008](./img/exception_008.PNG)
+
+However, if the payload meets all the validity requirements, the requested operation will be carried out: 
+![Valid Reservation](./img/valid_reservation.PNG)
 
 ### Unit Tests
 The **ReservationValidationService** class (belonging to the _Reservations_ microservice) was identified as the service with the **more business logic content**, so unit tests of all the methods (and all lines) of this class were performed.
@@ -135,7 +163,7 @@ Just make sure:
 1. You are pointing to the correct environment (Upper right section)
 2. You have logged in as a user / or admin (only for the reservations endpoints)
 
-To log in, just open the "User" or "Admin" folder and click on the **Get New Access Token** button. It will open the Cognito Hosted UI.
+To log in, just open the **User** or **Admin** folder and click on the **Get New Access Token** button. It will open the Cognito Hosted UI.
 
 ![Postman OAuth 2.0](./img/postman_oauth2.PNG)
 

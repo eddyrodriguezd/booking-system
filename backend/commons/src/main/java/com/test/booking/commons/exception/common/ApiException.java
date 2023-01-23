@@ -1,8 +1,5 @@
 package com.test.booking.commons.exception.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.test.booking.commons.config.mapper.MapperConfig;
-import com.test.booking.commons.exception.JsonParsingException;
 import lombok.*;
 
 @Data
