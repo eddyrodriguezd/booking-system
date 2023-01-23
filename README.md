@@ -37,13 +37,14 @@ Data was organized in **three tables: hotels, rooms and reservations**, which ar
 | currency_code    | VARCHAR(3)	 | Price's currency code (based on ISO 4217), e.g. PEN, CAD etc. |
 
 #### Reservations
-| Column name   | Data type | Description                           |
-| :-----        | :---      | :---                                  |
-| id	        | UUID	    | Unique identifier                     |
-| room_id	    | UUID	    | Foreign key to room identifier        |
-| checkin_date	| date	    | Date on which the accomodation begins |
-| checkout_date	| date	    | Date on which the accomodation ends   |
-| guest_id	    | UUID	    | Cognito's guest identifier            |
+| Column name   | Data type   | Description                                       |
+| :-----        | :---        | :---                                              |
+| id	        | UUID	      | Unique identifier                                 |
+| room_id	    | UUID	      | Foreign key to room identifier                    |
+| checkin_date	| date	      | Date on which the accomodation begins             |
+| checkout_date	| date	      | Date on which the accomodation ends               |
+| guest_id	    | UUID	      | Cognito's guest identifier                        |
+| status	    | VARCHAR(20) | Whether reservation is VALID or has been CANCELED |
 
 The relationship between these tables can be seen in the following Entity-Relationship diagram:
 ![Database ER Diagram](./img/db_er_diagram.png)

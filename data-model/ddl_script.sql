@@ -38,6 +38,7 @@ CREATE TABLE booking.reservations
   check_out_date date NOT NULL,
   guest_id uuid NOT NULL,
   status VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL,
   constraint fk_room_id
      foreign key (room_id) 
      REFERENCES booking.rooms (id)
