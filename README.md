@@ -103,7 +103,7 @@ The developed solution has 11 types of exceptions in case the system isn't able 
 | 010  | InvalidReservationDatesException (Creating reservation extends previous one) | By creating this new reservation, you are extending a previously created reservation           |
 | 011  | InvalidReservationDatesException (Modifying reservation merges previous one) | By modifying this reservation, you are merging a previously created reservation with this one  |
 
-These exception are returned to user when trying to call the API. Some examples will be presented below.
+These exception are returned to user when trying to call the API. Some examples are presented below.
 
 * If a user tries to create a reservation for today's date:
 ![Exception 006](./img/exception_006.PNG)
@@ -115,6 +115,8 @@ However, if the payload meets all the validity requirements, the requested opera
 ![Valid Reservation](./img/valid_reservation.PNG)
 
 ### Unit Tests
+The units tests were created using **JUnit 5** (for the creation of the tests and validation of results) and **Mockito** (for the creation of objects which can return test values) frameworks.
+
 The **ReservationValidationService** class (belonging to the _Reservations_ microservice) was identified as the service with the **more business logic content**, so unit tests of all the methods (and all lines) of this class were performed.
 ![Unit Tests](./img/unit-tests.PNG)
 
